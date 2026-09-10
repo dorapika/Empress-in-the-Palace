@@ -221,7 +221,7 @@ const CHARACTERS = [
     resource:4, beauty:8, intel:8, talent:7, cycle:{m:2,f:2,o:3},
     quote:'「這幾年的情愛與時光，終究是錯付了……」',
     skills:[
-      { key:'dieren', name:'蝶舞飛仙', desc:'溫泉藏蝶翩躚一舞，美貌與才藝各 +5（每 2 回合限用 1 次）', type:'active-beautytalent', amount:5, cooldown:2 },
+      { key:'dieren', name:'蝶舞飛仙', desc:'溫泉藏蝶翩躚一舞，美貌與才藝各 +5（每 3 回合限用 1 次）', type:'active-beautytalent', amount:5, cooldown:3 },
       { key:'xiangshui', name:'香水百合', desc:'迷情香引百合，可逼迫身懷六甲之嬪妃強行侍寢誘發滑胎', type:'special-mixiang' }
     ]},
   { id:'huiguiren', name:'惠貴人', title:'沈眉莊', element:'金', avatar:'char4.jpg',
@@ -1183,7 +1183,6 @@ function useItem(iid){
   render();
 }
 
-/* ================= 沉水暗香專屬轉換邏輯 ================= */
 const CHENSHUI_TARGET_ITEMS = [
   { id:'shexiang', name:'麝香', desc:'指定對象滑胎（智能檢定：4,5,6）', cat:'poison' },
   { id:'huanyixiang', name:'歡宜香', desc:'指定對象下次懷孕檢定少抽一張數字卡', cat:'poison' },
@@ -1348,7 +1347,6 @@ function endPlayerTurn(){
   render();
 }
 
-/* ================= 3. 行動表單與視覺化對手頭像選擇 ================= */
 function otherAlivePlayers(p){
   return G.players.filter(o => o.alive && o.idx !== p.idx);
 }
@@ -3154,7 +3152,7 @@ function simulateSingleHeadlessGame(){
       if(p.charId === 'wanpin' && round >= (p.skillCooldownUntil['dieren']||0)){
         p.buffs.push({ stat:'beauty', amount:5, untilRound:round+1 });
         p.buffs.push({ stat:'talent', amount:5, untilRound:round+1 });
-        p.skillCooldownUntil['dieren'] = round + 2;
+        p.skillCooldownUntil['dieren'] = round + 3;
       }
       if(p.charId === 'huanghou' && round >= (p.skillCooldownUntil['chunyuan']||0)){
         ['beauty','intel','talent'].forEach(stat => p.buffs.push({ stat, amount:5, untilRound:round+1 }));
@@ -3329,7 +3327,7 @@ function renderSimulationModal(data){
 
       <div style="background:#f9f5ea; border:1px solid var(--gold); padding:10px 12px; border-radius:3px; margin-top:12px; font-size:.8rem; color:#5c4f3d;">
         <b><i class="fa-solid fa-lightbulb"></i> 策士戰術解構：</b><br>
-        • <b>莞嬪（甄嬛）</b> 擁有美貌 8 + 才藝 7 的基底，配合每 2 回合發動的【蝶舞飛仙】（美才各+5），爭寵數值常態碾壓六宮，加上週期有高達 <b>42.9% 的排卵期</b>，受孕頻率極高。<br>
+        • <b>莞嬪（甄嬛）</b> 擁有美貌 8 + 才藝 7 的基底，配合每 3 回合發動的【蝶舞飛仙】（美才各+5），爭寵數值常態碾壓六宮，加上週期有高達 <b>42.9% 的排卵期</b>，受孕頻率極高。<br>
         • <b>華妃（年世蘭）</b> 憑藉【烽火連天】在爭寵第二時強制登車，並以【仗勢欺人】多擲骰下毒，極具翻盤爆發力。<br>
         • <b>皇后（宜修）</b> 雖初始資源豐沛、智能高達 8，但<b>排卵期僅佔 1/6 (16.7%)</b>，極難自力誕育雙阿哥，偏向全場下毒控場型角色。
       </div>
