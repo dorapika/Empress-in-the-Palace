@@ -929,11 +929,7 @@ function executeAiAction(p, aid, target, poisonsInHand){
       if(!p.knownSitong) p.knownSitong = {};
       const isSitong = !!(target.pregnancy && target.pregnancy.fromSitong);
       p.knownSitong[target.idx] = isSitong;
-      if(isSitong){
-        addLog(`【平安脈秘奏】${c.name}派遣太醫探得${tc.name}所懷確非龍種，乃是【私通孽胎】！殺機已現……`, { secret:true, revealRound:G.round+1 });
-      } else {
-        addLog(`${c.name}宣召太醫密探${tc.name}之脈象，洞悉了六宮深閨秘辛。`);
-      }
+      addLog(`${c.name}宣召太醫密探${tc.name}之脈象，洞悉了六宮深閨秘辛。`);
       break;
     }
     case 'zhangbi': {
@@ -2151,7 +2147,7 @@ function resolveBaping(){
   const turnedPhys = p.staffTurned['physician'] || 0;
   if(turnedPhys >= p.physicians && p.physicians > 0){
     const failMsg = `【太醫全員欺瞞】小主宮中隨侍太醫已全數被收買變節！太醫回宮後滿口胡言謊報脈象，使您一無所獲，且變節身分當場曝光！`;
-    addLog(failMsg, { type:'drama' });
+    addLog(`${charOf(p.charId).name}宣召太醫密探${charOf(target.charId).name}之脈象，洞悉了六宮深閨秘辛。`);
     G.lastActionResultText = failMsg;
     G.turnStep = 'actionResult'; render(); return;
   }
