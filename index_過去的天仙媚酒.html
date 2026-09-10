@@ -1,0 +1,3372 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>甄嬛傳桌遊 — 線上數位典藏旗艦版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --ink:#1c1a17;
+    --paper:#efe6d3;
+    --paper-2:#e4d9bf;
+    --paper-card:#fbf6e8;
+    --crimson:#7a1f2b;
+    --crimson-dark:#591620;
+    --gold:#b8933f;
+    --gold-light:#d8bd7c;
+    --jade:#3b6e5e;
+    --line: rgba(28,26,23,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(ellipse at top, #2d2421 0%, #171310 75%);
+    color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif;
+    min-height:100vh;
+    padding:16px 12px 60px;
+  }
+  .stage{ max-width:760px; margin:0 auto; }
+  .masthead{ text-align:center; color:var(--gold-light); margin-bottom:16px; position:relative; }
+  .masthead h1{
+    font-family:'Noto Serif TC',serif; font-weight:900; font-size:2.2rem;
+    letter-spacing:.16em; margin:0 0 4px; color:#f4e5bf; text-shadow:0 2px 4px rgba(0,0,0,.6);
+  }
+  .masthead p{ margin:0; font-size:.82rem; color:#c4b588; letter-spacing:.08em; }
+  .top-toolbar{ display:flex; justify-content:center; gap:10px; margin:10px 0 14px; flex-wrap:wrap; }
+  .top-btn{
+    font-size:.76rem; padding:4px 10px; border-radius:20px;
+    background:rgba(255,255,255,.08); color:var(--gold-light);
+    border:1px solid rgba(184,147,63,.4); cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px; transition:all .15s ease;
+  }
+  .top-btn:hover{ background:rgba(184,147,63,.2); color:#fff; }
+  .top-btn.active{ background:var(--jade); color:#fff; border-color:#5fb899; }
+
+  .card{
+    background: var(--paper); border:1px solid var(--line); border-radius:3px;
+    box-shadow: 0 12px 35px rgba(0,0,0,.5), inset 0 0 0 1px rgba(184,147,63,.3);
+    padding:20px 22px 18px; margin-bottom:16px; position:relative;
+  }
+  .card::before{
+    content:""; position:absolute; inset:6px;
+    border:1px solid rgba(184,147,63,.32); pointer-events:none;
+  }
+  .card h2{
+    font-family:'Noto Serif TC',serif; font-size:1.18rem; margin:0 0 12px;
+    color:var(--crimson-dark); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+  .card h2 .tag{
+    font-size:.68rem; background:var(--crimson); color:#f6e9c8;
+    padding:2px 8px; border-radius:2px; letter-spacing:.08em; font-family:'Noto Sans TC',sans-serif;
+  }
+  .muted{color:#6b6355; font-size:.85rem; line-height:1.6;}
+  .row{display:flex; flex-wrap:wrap; gap:8px;}
+  button{
+    font-family:'Noto Sans TC',sans-serif; font-size:.9rem; padding:8px 14px;
+    border-radius:3px; border:1px solid var(--crimson-dark); background:var(--crimson);
+    color:#f6e9c8; cursor:pointer; transition:transform .08s ease, background .15s ease;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  button:hover{background:var(--crimson-dark);}
+  button:active{transform:scale(.97);}
+  button.secondary{ background:transparent; color:var(--crimson-dark); border:1px solid var(--crimson-dark); }
+  button.secondary:hover{background:rgba(122,31,43,.08);}
+  button.gold{ background:var(--gold); border-color:#8a6b26; color:#2a2118; font-weight:700; }
+  button.gold:hover{background:var(--gold-light);}
+  button.debug-btn{ background:#2e6f40; border-color:#1c4b2a; color:#f0fdf4; }
+  button.debug-btn:hover{background:#3b8c52;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  select, input[type=text]{
+    font-family:'Noto Sans TC',sans-serif; font-size:.9rem; padding:8px 10px;
+    border:1px solid var(--line); border-radius:2px; background:#fbf6e8; width:100%;
+  }
+  .pill{
+    display:inline-block; padding:2px 8px; border-radius:14px; font-size:.72rem;
+    background:var(--paper-2); border:1px solid var(--line); margin-right:4px;
+  }
+  .char-avatar{
+    width:48px; height:48px; border-radius:50%; object-fit:cover; object-position:center 15%;
+    border:2px solid var(--gold); box-shadow:0 2px 6px rgba(0,0,0,.25); background:#dfd2b5; flex-shrink:0;
+  }
+  .char-avatar.lg{ width:76px; height:76px; border-width:3px; }
+  .char-avatar.sm{ width:32px; height:32px; border-width:1.5px; }
+  .avatar-card-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin:8px 0 12px;
+  }
+  .avatar-target-card{
+    border:1px solid var(--line); background:var(--paper-card); border-radius:4px;
+    padding:10px 8px; text-align:center; cursor:pointer; transition:all .15s ease;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .avatar-target-card:hover{ border-color:var(--crimson); transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.15); }
+  .avatar-target-card.selected{ border:2px solid var(--crimson); background:#fef3e2; box-shadow:0 0 0 2px rgba(122,31,43,.25); }
+  .avatar-target-card .nm{ font-family:'Noto Serif TC',serif; font-weight:700; color:var(--crimson-dark); font-size:.88rem; }
+  .avatar-target-card .sub{ font-size:.72rem; color:#736856; }
+
+  .statgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0;}
+  .statgrid div{ background:var(--paper-2); border:1px solid var(--line); padding:8px 4px; text-align:center; border-radius:2px; }
+  .statgrid .num{font-family:'Noto Serif TC',serif; font-weight:700; font-size:1.15rem; color:var(--crimson-dark);}
+  .statgrid .lbl{font-size:.68rem; color:#6b6355;}
+  .gate{ text-align:center; padding:40px 16px; }
+  .gate .name{ font-family:'Noto Serif TC',serif; font-size:1.65rem; color:var(--crimson-dark); margin:10px 0 16px; }
+  .itemlist{display:flex; flex-direction:column; gap:6px; margin:10px 0;}
+  .itemrow{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--paper-card); border:1px solid var(--line); padding:8px 10px;
+    border-radius:2px; font-size:.86rem; gap:8px;
+  }
+  .itemrow .nm{font-weight:700; margin-right:6px; color:var(--crimson-dark);}
+  .itemrow .ds{color:#6b6355; font-size:.78rem;}
+  .logbox{ max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; font-size:.83rem; }
+  .logline{border-left:3px solid var(--gold); padding:5px 10px; background:rgba(184,147,63,.09); line-height:1.5;}
+  .logline.secret{border-left-color:var(--jade); background:rgba(59,110,94,.09);}
+  .logline.drama{border-left-color:var(--crimson); background:rgba(122,31,43,.09);}
+  .choice-card{
+    border:1px solid var(--line); background:var(--paper-card); padding:12px 14px; border-radius:2px; margin-bottom:8px; cursor:pointer; transition:all .15s ease;
+  }
+  .choice-card:hover{border-color:var(--crimson); background:#fff9f0;}
+  .choice-card h4{margin:0 0 4px; font-family:'Noto Serif TC',serif; color:var(--crimson-dark);}
+  .choice-card p{margin:0; font-size:.8rem; color:#6b6355;}
+  .footer-note{ text-align:center; color:#8c8266; font-size:.74rem; margin-top:24px; line-height:1.7; }
+  hr.sep{border:none; border-top:1px dashed var(--line); margin:14px 0;}
+  .fieldset{margin:10px 0;}
+  .fieldset label{display:block; font-size:.8rem; color:#6b6355; margin-bottom:4px; font-weight:700;}
+  .dice-wrap{display:flex; justify-content:center; margin:16px 0 10px;}
+  .dice-box{
+    width:68px; height:68px; display:flex; align-items:center; justify-content:center;
+    font-family:'Noto Serif TC',serif; font-weight:700; font-size:2.2rem;
+    background:#fffaf0; border:2px solid var(--crimson-dark); border-radius:12px;
+    color:var(--crimson-dark); box-shadow:0 6px 14px rgba(0,0,0,.35);
+  }
+  .dice-box.settled{ animation: diceBounce .45s ease; border-color:var(--gold); }
+  @keyframes diceBounce{ 0%{transform:scale(1.35);} 55%{transform:scale(.88);} 100%{transform:scale(1);} }
+
+  .dice-multi-wrap{ display:flex; justify-content:center; align-items:center; gap:10px; margin:16px 0 12px; flex-wrap:wrap; }
+  .dice-box.match{
+    border-color:var(--crimson); background:#fff0f2; color:var(--crimson);
+    box-shadow:0 0 0 3px rgba(122,31,43,.32), 0 6px 14px rgba(0,0,0,.25); animation: diceBounce .45s ease;
+  }
+  .cards-wrap{ display:flex; justify-content:center; gap:12px; margin:12px 0 8px; perspective:700px; flex-wrap:wrap; }
+  .num-card{ width:56px; height:82px; position:relative; transform-style:preserve-3d; transition: transform .5s ease; }
+  .num-card.flipped{ transform: rotateY(180deg); }
+  .num-card .face{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    border-radius:6px; backface-visibility:hidden; font-family:'Noto Serif TC',serif; font-weight:700; font-size:1.6rem;
+  }
+  .num-card .back{
+    background:linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    color:var(--gold-light); border:2px solid var(--gold); box-shadow:0 3px 8px rgba(0,0,0,.3);
+  }
+  .num-card .front{
+    background:#fffaf0; border:2px solid var(--crimson-dark); color:var(--crimson-dark);
+    transform: rotateY(180deg); box-shadow:0 3px 8px rgba(0,0,0,.25);
+  }
+  .num-card.match .front{
+    border-color:var(--gold); background:#fdf2d8;
+    box-shadow:0 0 0 3px rgba(184,147,63,.55), 0 4px 10px rgba(0,0,0,.25); color:var(--crimson);
+  }
+  .palace-modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:999;
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .palace-modal{
+    background:var(--paper); border:2px solid var(--gold); border-radius:4px;
+    max-width:540px; width:100%; max-height:90vh; overflow-y:auto; padding:22px;
+    box-shadow:0 15px 40px rgba(0,0,0,.6); position:relative;
+  }
+  .drama-quote{
+    font-family:'Noto Serif TC',serif; font-style:italic; font-size:.9rem;
+    color:var(--crimson-dark); background:#fcf7ec; border-left:3px solid var(--crimson);
+    padding:8px 12px; margin:8px 0 12px; border-radius:2px; line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="masthead">
+    <h1>後 宮 甄 嬛 傳</h1>
+    <p>經典宮鬥桌遊 · 線上數位典藏旗艦版</p>
+    <div class="top-toolbar">
+      <button class="top-btn" id="btn_debug_toggle" onclick="toggleDebugMode()"><i class="fa-solid fa-bug"></i> <span id="lbl_debug_status">除錯模式：已關閉</span></button>
+      <button class="top-btn" onclick="openAssetManagerModal()"><i class="fa-solid fa-images"></i> 換裝/圖檔自訂</button>
+      <button class="top-btn" onclick="openSimulationModal()"><i class="fa-solid fa-chart-pie"></i> 蒙地卡羅 200 局推演</button>
+    </div>
+  </div>
+  <div id="app"></div>
+</div>
+<div id="modal_container"></div>
+
+<script>
+/* ============================= 全域資料庫 ============================= */
+const CHARACTERS = [
+  { id:'huanghou', name:'皇后', title:'烏拉娜拉宜修', element:'土', avatar:'char1.jpg',
+    resource:10, beauty:3, intel:8, talent:3, cycle:{m:2,f:3,o:1},
+    quote:'「皇上！臣妾做不到……臣妾真的做不到啊！」',
+    skills:[
+      { key:'kuilei', name:'操偶魁儡', desc:'運用中宮威勢操弄人心，煽動時智能點數 +5', type:'passive-persuade', amount:5 },
+      { key:'chunyuan', name:'純元護體', desc:'哭訴純元故情引皇上百感交集，各項能力 +5（每 3 回合限用 1 次）', type:'active-allstats', amount:5, cooldown:3 }
+    ]},
+  { id:'huafei', name:'華妃', title:'年世蘭', element:'火', avatar:'char2.jpg',
+    resource:8, beauty:8, intel:6, talent:4, cycle:{m:3,f:1,o:2},
+    quote:'「賤人就是矯情！不痛痛快快吐了真話，本宮便賞她一丈紅！」',
+    skills:[
+      { key:'fenghuo', name:'烽火連天', desc:'大將軍之妹橫行六宮，爭寵結算第 2 名時無視點數強行登車侍寢（每 3 回合限用 1 次）', type:'active-forceserve', cooldown:3 },
+      { key:'zhangshi', name:'仗勢欺人', desc:'仗著年氏威名下毒威逼，投毒檢定額外多擲 1 顆骰子（每 2 回合限用 1 次）', type:'active-poisondie', amount:1, cooldown:2 }
+    ]},
+  { id:'wanpin', name:'莞嬪', title:'甄嬛', element:'木', avatar:'char3.jpg',
+    resource:4, beauty:8, intel:8, talent:7, cycle:{m:2,f:2,o:3},
+    quote:'「這幾年的情愛與時光，終究是錯付了……」',
+    skills:[
+      { key:'dieren', name:'蝶舞飛仙', desc:'溫泉藏蝶翩躚一舞，美貌與才藝各 +5（每 2 回合限用 1 次）', type:'active-beautytalent', amount:5, cooldown:2 },
+      { key:'xiangshui', name:'香水百合', desc:'迷情香引百合，可逼迫身懷六甲之嬪妃強行侍寢誘發滑胎', type:'special-mixiang' }
+    ]},
+  { id:'huiguiren', name:'惠貴人', title:'沈眉莊', element:'金', avatar:'char4.jpg',
+    resource:4, beauty:7, intel:6, talent:5, cycle:{m:2,f:2,o:2},
+    quote:'「寧可枝頭抱香死，何曾吹落北風中。」',
+    skills:[
+      { key:'taihou', name:'太后福澤', desc:'（常駐）獲太后庇佑，遭下毒時對方擲骰數減半', type:'passive-poisonresist' },
+      { key:'tianxian', name:'天仙媚酒', desc:'處於排卵期時，可將行動改為私通秘密行動（全場限 1 次）', type:'special-sitong-once', usesLeft:1 }
+    ]},
+  { id:'anda_ying', name:'安答應', title:'安陵容', element:'水', avatar:'char5.jpg',
+    resource:2, beauty:5, intel:6, talent:9, cycle:{m:1,f:3,o:3},
+    quote:'「原是我不配……吃苦杏仁，竟是唯一由得了自己的事了。」',
+    skills:[
+      { key:'chenshui', name:'沉水暗香', desc:'深諳製香，可將手中任何道具轉化為麝香、歡宜香、舒痕膠、凝露香或息肌丸（全場限 3 次）', type:'special-anysubstitute', usesLeft:3 },
+      { key:'miaoyin', name:'妙音娘子', desc:'金鶯展喉，侍寢爭寵點數常駐 +3', type:'passive-favor', amount:3 }
+    ]}
+];
+
+const ITEM_POOL = [
+  { id:'shexiang', name:'麝香', cat:'poison', desc:'指定對象滑胎（智能檢定：4,5,6）', effect:'miscarry', check:[4,5,6] },
+  { id:'honghua', name:'紅花', cat:'poison', desc:'一碗端下絕其子嗣，指定對象滑胎（智能檢定：5,6）', effect:'miscarry', check:[5,6] },
+  { id:'jiazhutao', name:'夾竹桃花粉', cat:'poison', desc:'混入米糕殺人於無形，指定對象滑胎（智能檢定：5）', effect:'miscarry', check:[5] },
+  { id:'huanyixiang', name:'歡宜香', cat:'poison', desc:'專寵賜香暗藏麝毒，使對象下次懷孕少抽 1 張數字卡', effect:'pregDebuff', amount:-1 },
+  { id:'manaozhulian', name:'瑪瑙珠鍊', cat:'poison', desc:'浸潤麝香水之串珠，使對象下次懷孕少抽 1 張數字卡', effect:'pregDebuff', amount:-1 },
+  { id:'shuhenjiao', name:'舒痕膠', cat:'poison', desc:'桃花白玉膏暗摻麝香，累積下毒 2 次方可滑胎（僅安答應可持有）', effect:'miscarryStack', check:[5,6], onlyHolder:'anda_ying' },
+  { id:'yaolixue', name:'藥理學共筆', cat:'poison', desc:'深宮偏方擾亂氣血，對象經期大亂重抽週期起點', effect:'cycleReset' },
+  { id:'shiyibeizu', name:'時疫杯組', cat:'poison', desc:'沈眉莊染疫之茶盞，使對象患病臥床至下回合結束', effect:'sick' },
+  { id:'zhuxi', name:'竹息姑姑的髮簪', cat:'poison', desc:'太后近侍威儀相迫，對象美貌 -3（智能檢定：5,6）', effect:'statDown', stat:'beauty', amount:3, check:[5,6] },
+  { id:'huanbi', name:'浣碧的浮光錦', cat:'poison', desc:'僭越俗麗惹人恥笑，對象美貌 -2（智能檢定：5,6）', effect:'statDown', stat:'beauty', amount:2, check:[5,6] },
+  { id:'qifei', name:'齊妃的頭髮', cat:'poison', desc:'愚鈍婦人心思用盡，對象智能 -4（智能檢定：5,6）', effect:'statDown', stat:'intel', amount:4, check:[5,6] },
+  { id:'sanage', name:'三阿哥筆記', cat:'poison', desc:'又長高了卻不長腦，對象智能 -3（智能檢定：5,6）', effect:'statDown', stat:'intel', amount:3, check:[5,6] },
+  { id:'mushufen', name:'木薯粉', cat:'poison', desc:'投毒襁褓，殺死剛出生 1 回合內之皇嗣（檢定：5,6）', effect:'killNewborn', check:[5,6] },
+  { id:'nengluxiang', name:'凝露香', cat:'poison', equippable:true, desc:'異香撲鼻！美貌+5（持3回）。暗含麝毒：下次懷孕少抽1卡', effect:'buffSideEffect', stat:'beauty', amount:5, duration:3, pregPenalty:-1 },
+  { id:'xijiwan', name:'息肌丸', cat:'poison', equippable:true, desc:'納臍增艷！美貌+10（持1回）。大傷胞宮：下次懷孕少抽1卡', effect:'buffSideEffect', stat:'beauty', amount:10, duration:1, pregPenalty:-1 },
+  { id:'oufen', name:'藕粉桂花糖糕', cat:'tonic', desc:'僅惠貴人服之有效：美貌 +2 持續 3 回合', effect:'buff', stat:'beauty', amount:2, duration:3, onlyTarget:'huiguiren' },
+  { id:'shaoai', name:'燒艾', cat:'tonic', desc:'宮中燒艾溫經固元，防止滑胎持續 2 回合', effect:'preventMiscarry', duration:2 },
+  { id:'antaiyao', name:'安胎藥', cat:'tonic', desc:'太醫院保胎靈方，防止滑胎持續 1 回合', effect:'preventMiscarry', duration:1 },
+  { id:'baoshengnan', name:'包生男', cat:'tonic', desc:'西域轉胎秘藥，分娩翻出公主時可當場重骰重抽一次逆天改命！', effect:'genderReroll' },
+  { id:'dongejiao', name:'東阿阿膠', cat:'tonic', desc:'太后御賜極品阿膠，化為護體金鐘化解下一次負面厄運', effect:'shield' },
+  { id:'zhuyuntangyao', name:'助孕湯藥', cat:'tonic', desc:'氣血兩旺，使對象下次懷孕檢定多抽 1 張數字卡', effect:'pregDebuff', amount:1 },
+  { id:'renshentang', name:'人參湯', cat:'tonic', desc:'奉上大補之物龍顏大悅，本回合爭寵前二名小主皆可侍寢！', effect:'doubleFavor' },
+  { id:'zaomiyiren', name:'糙米薏仁湯', cat:'tonic', desc:'清熱拔毒，即刻解除一項中毒負面效果', effect:'cureOne' },
+  { id:'bingtang', name:'冰糖枇杷甜湯', cat:'tonic', desc:'潤喉亮嗓才藝 +3，持續 2 回合', effect:'buff', stat:'talent', amount:3, duration:2 },
+  { id:'tezhigufang', name:'特製古方', cat:'tonic', desc:'催動天癸，指定對象強制進入最佳受孕之【排卵期】', effect:'forceOvulation' },
+  { id:'changxiangsi', name:'長相思', cat:'equip', desc:'先帝賜琴：才藝 +2，美貌 +1', effect:'equipBuff', stats:{talent:2,beauty:1} },
+  { id:'changxiangshou', name:'長相守', cat:'equip', desc:'果郡王長笛：才藝 +3', effect:'equipBuff', stats:{talent:3} },
+  { id:'luozidai', name:'螺子黛', cat:'equip', desc:'波斯進貢畫眉墨：美貌 +5 常駐佩戴', effect:'equipBuff', stats:{beauty:5} },
+  { id:'lantianyu', name:'藍田玉', cat:'equip', desc:'溫潤生香：美貌 +3 常駐佩戴', effect:'equipBuff', stats:{beauty:3} },
+  { id:'jinzhiruanzhen', name:'金織軟枕', cat:'equip', desc:'錦榻生輝：美貌 +1 常駐佩戴', effect:'equipBuff', stats:{beauty:1} },
+  { id:'baiyushanzi', name:'白玉扇子', cat:'equip', desc:'冰肌玉骨：美貌 +1 常駐佩戴', effect:'equipBuff', stats:{beauty:1} },
+  { id:'nvlunyu', name:'女倫語', cat:'equip', desc:'研讀女訓修身養性：智能 +2 常駐佩戴', effect:'equipBuff', stats:{intel:2} },
+  { id:'bingxixie', name:'冰嬉鞋', cat:'equip', desc:'冰上凌波翩若驚鴻：才藝 +3 常駐佩戴', effect:'equipBuff', stats:{talent:3} },
+  { id:'longyuewanju', name:'瓏月的玩具', cat:'equip', desc:'九連環啟智：智能 +2 常駐佩戴', effect:'equipBuff', stats:{intel:2} },
+  { id:'shujin', name:'蜀錦', cat:'equip', desc:'蜀錦裁衣鞋綴明珠：美貌 +1 常駐佩戴', effect:'equipBuff', stats:{beauty:1} },
+  { id:'ruyibuyao', name:'如意步搖', cat:'equip', desc:'步步生蓮：美貌 +2 常駐佩戴', effect:'equipBuff', stats:{beauty:2} },
+  { id:'miqingxiang', name:'迷情香', cat:'special', desc:'僅莞嬪可持有的禁宮秘香', effect:'mixiang', onlyHolder:'wanpin' }
+];
+
+const ACTION_CARDS = [
+  { id:'poison', name:'下毒', kind:'normal', desc:'持有毒藥時派遣宮人投毒害人，依智能點數/2擲骰判定。' },
+  { id:'persuade', name:'煽動', kind:'secret', desc:'暗中策反他宮宮人叛變！被策反之宮人將永久變節，往後任務皆反噬失敗。' },
+  { id:'sitong', name:'私通', kind:'secret', desc:'排卵期夜會情郎，直接抽取數字卡擲骰判定受孕。' },
+  { id:'dixie', name:'滴血認親', kind:'normal', desc:'於景仁宮指控皇嗣血脈！雙方依各自智能/2擲骰對決（實質私通指控方額外多擲2顆玉骰；否則被控方多擲2顆玉骰）。皇后若為指控方，敗訴完全免受任何懲處。' },
+  { id:'baping', name:'把平安脈', kind:'normal', desc:'派太醫強行為其他小主探脈，探查其月經週期、私通孕脈與受孕月數。' },
+  { id:'gift', name:'送禮', kind:'normal', desc:'指派宮女或太監轉贈道具籠絡人心。' },
+  { id:'steal', name:'偷竊', kind:'normal', desc:'派遣手腳俐落之太監暗潛他宮，盜取已穿戴佩戴之首飾器具。' },
+  { id:'zhangbi', name:'杖斃', kind:'normal', desc:'厲行宮規！處死己宮一名宮人，清除叛奴變節狀態。' }
+];
+
+const EVENT_CARDS = [
+  { id:'toufeng', name:'頭風發作', desc:'疾痛難耐，隨機一人臥病至下回合結束，無法行動。' },
+  { id:'shiyi', name:'時疫蔓延', desc:'宮中大亂疫病橫行，整座紫禁城暫停侍寢 3 回合！' },
+  { id:'yasang', name:'啞嗓受損', desc:'寒涼入喉，隨機一人才藝 -3，持續 2 回合。' },
+  { id:'songpi', name:'容顏鬆皮', desc:'歲月侵蝕，隨機一人美貌 -3，持續 2 回合。' },
+  { id:'jingong', name:'萬邦進貢', desc:'內務府大開府庫，下回合所有小主可多抽一張道具卡！' },
+  { id:'gongnv', name:'宮女調撥', desc:'新人冊封，隨機一位小主獲賜新宮女 1 名。' },
+  { id:'taijian', name:'太監充任', desc:'敬事房分派差役，隨機一位小主獲賜新太監 1 名。' },
+  { id:'gewu', name:'六宮歌舞宴', desc:'各顯神通！全體依才藝點數比試，拔得頭籌者本回合直接侍寢！' },
+  { id:'daqing', name:'大清國色大賞', desc:'群芳競艷！美貌最高者獲賜內務府賞賜，直接抽 3 張道具卡！' }
+];
+
+/* ============================= 核心狀態機 ============================= */
+let G = null;
+let DEBUG_MODE = false;
+let GAME_MODE = 'ai'; // 'ai' (人機對戰) 或 'pass' (多人交接)
+let AI_SPEED = 650; // AI 行動延遲毫秒數
+
+function toggleDebugMode(){
+  DEBUG_MODE = !DEBUG_MODE;
+  updateDebugUi();
+  if(G){
+    if(DEBUG_MODE){
+      G.globalFavorPauseUntil = 0;
+      addLog(`【內務府啟奏】已開啟「除錯模式」！全面掃除時疫，暫停侍寢之禁制即刻解除！`, { type:'drama' });
+    } else {
+      addLog(`【內務府啟奏】除錯模式已關閉，宮闈回歸祖制常規運行。`);
+    }
+    render();
+  }
+}
+
+function updateDebugUi(){
+  const btn = document.getElementById('btn_debug_toggle');
+  const lbl = document.getElementById('lbl_debug_status');
+  if(btn && lbl){
+    if(DEBUG_MODE){
+      btn.classList.add('active');
+      lbl.textContent = '除錯模式：已開啟（無時疫/私通保證成功）';
+    } else {
+      btn.classList.remove('active');
+      lbl.textContent = '除錯模式：已關閉';
+    }
+  }
+}
+
+const rnd = (n) => Math.floor(Math.random()*n);
+const pick = (arr) => arr[rnd(arr.length)];
+const rollDie = () => rnd(6)+1;
+const drawNumberCard = () => rnd(6)+1;
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function charOf(id){ return CHARACTERS.find(c=>c.id===id); }
+function itemOf(id){ return ITEM_POOL.find(i=>i.id===id); }
+function actionOf(id){ return ACTION_CARDS.find(a=>a.id===id); }
+function skillAvailable(p, key){ return G.round >= (p.skillCooldownUntil[key]||0); }
+function useSkillCooldown(p, key, cd){ p.skillCooldownUntil[key] = G.round + cd; }
+
+function initGame(playerConfigs){
+  G = {
+    round: 1,
+    order: [],
+    orderPos: 0,
+    players: playerConfigs.map((cfg, idx)=>{
+      const cid = cfg.charId;
+      const isAi = !!cfg.isAi;
+      const c = charOf(cid);
+      const totalCycle = c.cycle.m + c.cycle.f + c.cycle.o;
+      const hand = [];
+      const startCount = Math.max(1, Math.floor(c.resource/2));
+      for(let i=0;i<startCount;i++){
+        let pool = ITEM_POOL.filter(x=>x.cat!=='special');
+        if(DEBUG_MODE) pool = pool.filter(x=>x.id!=='shiyibeizu');
+        hand.push(pick(pool).id);
+      }
+      return {
+        idx, charId: cid, isAi,
+        maids:2, eunuchs:1, physicians:1,
+        staffTurned:{ maid:0, eunuch:0, physician:0 },
+        hand,
+        equipped:[],
+        equippedExp:{},
+        buffs:[],
+        pregDelta:0,
+        preventMiscarryUntil:0,
+        shieldCount:0,
+        sickUntil:0,
+        cycleTotal: totalCycle,
+        cycleClock: rnd(totalCycle),
+        pregnancy:null,
+        skillCooldownUntil:{},
+        skillUsesLeft: Object.fromEntries(c.skills.filter(s=>s.usesLeft!==undefined).map(s=>[s.key,s.usesLeft])),
+        knownSitong:{},
+        alive:true,
+        princes:0, princesses:0,
+        miscarryStackCount:0
+      };
+    }),
+    log:[],
+    phase:'playerTurn',
+    turnStep:'gate',
+    pendingAction:null,
+    winner:null,
+    globalFavorPauseUntil:0,
+    extraDrawNextRound:false,
+    doubleFavorRound:null
+  };
+  addLog(`紫禁城選秀落定，六宮主位依序入宮。紅牆深鎖，宮鬥奪嫡風雲啟動！`, { type:'drama' });
+  startRound();
+}
+
+function startRound(){
+  G.order = G.players.filter(p=>p.alive).map(p=>p.idx);
+  G.orderPos = 0;
+  G.phase = 'playerTurn';
+  G.turnStep = 'gate';
+}
+
+function addLog(text, opts={}){
+  G.log.push(Object.assign({ round:G.round, text, secret:false, revealRound:null, type:'normal' }, opts));
+}
+
+function cyclePhase(p){
+  const c = charOf(p.charId).cycle;
+  const clk = p.cycleClock;
+  if(clk < c.m) return 'menses';
+  if(clk < c.m + c.f) return 'follicular';
+  return 'ovulation';
+}
+
+function effectiveStat(p, stat){
+  const c = charOf(p.charId);
+  const buffSum = p.buffs.filter(b=>b.stat===stat).reduce((s,b)=>s+b.amount,0);
+  let equipSum = 0;
+  p.equipped.forEach(iid=>{
+    const it = itemOf(iid);
+    if(it.effect==='equipBuff' && it.stats[stat]) equipSum += it.stats[stat];
+    if(it.effect==='buffSideEffect' && it.stat===stat) equipSum += it.amount;
+  });
+  return Math.max(0, c[stat] + buffSum + equipSum);
+}
+
+function currentPlayer(){ return G.players[G.order[G.orderPos]]; }
+
+/* ============================= 核心受孕判定引擎 ============================= */
+function performPregnancyRoll(p){
+  const die = rollDie();
+  let cardCount = Math.max(0, Math.min(3, 2 + (p.pregDelta||0)));
+  p.pregDelta = 0;
+  const cards = Array.from({length:cardCount}, ()=>drawNumberCard());
+
+  let pregnant = cards.includes(die);
+  if(DEBUG_MODE){
+    pregnant = true;
+    if(cards.length > 0 && !cards.includes(die)){
+      cards[0] = die; 
+    }
+  }
+  return { die, cards, pregnant };
+}
+
+/* ============================= 渲染分流架構 ============================= */
+const app = document.getElementById('app');
+
+function render(){
+  if(!G){ renderSetup(); return; }
+  if(G.phase==='gameOver'){ renderGameOver(); return; }
+  if(G.phase==='playerTurn'){ renderPlayerTurn(); return; }
+  if(G.phase==='event'){ renderEvent(); return; }
+  if(G.phase==='favor'){ renderFavor(); return; }
+  if(G.phase==='pregnancyGate'){ renderPregnancyGate(); return; }
+  if(G.phase==='deliveryGate'){ renderDeliveryGate(); return; }
+}
+
+/* ================= 1. 選角開局設定 ================= */
+let setupSelection = [];
+let humanSelectedCharId = 'wanpin';
+
+function renderSetup(){
+  if(setupSelection.length===0) setupSelection = CHARACTERS.map(()=>true);
+  const selectedCount = setupSelection.filter(Boolean).length;
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>六宮冊封 · 宮規與對陣模式 <span class="tag">SETUP</span></h2>
+
+      <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="${GAME_MODE==='ai'?'gold':'secondary'}" style="flex:1; justify-content:center;" onclick="setGameMode('ai')">
+          <i class="fa-solid fa-robot"></i> 單人沉浸 · 人機對戰模式
+        </button>
+        <button class="${GAME_MODE==='pass'?'gold':'secondary'}" style="flex:1; justify-content:center;" onclick="setGameMode('pass')">
+          <i class="fa-solid fa-users"></i> 聚會輪流 · 多人同機模式
+        </button>
+      </div>
+
+      ${GAME_MODE === 'ai' ? `
+        <div style="background:#fffcf2; border:1px solid var(--gold); padding:10px 14px; border-radius:3px; margin-bottom:14px; font-size:.85rem; line-height:1.6;">
+          <b style="color:var(--crimson-dark);"><i class="fa-solid fa-user-crown"></i> 人機對戰說明：</b><br>
+          請點選一位小主作為<b>【您親自操控的主位】</b>（金框標記）；其餘勾選之小主將化身為<b>【深宮 AI 對手】</b>（自主謀劃、暗中私通下毒、把脈獲取鐵證後發動滴血認親大審）。
+        </div>
+      ` : `
+        <div style="background:#fcf8f0; border:1px solid var(--line); padding:10px 14px; border-radius:3px; margin-bottom:14px; font-size:.85rem; line-height:1.6;">
+          <b style="color:var(--crimson-dark);"><i class="fa-solid fa-handshake"></i> 多人同機說明：</b><br>
+          所有勾選入宮的小主均由身邊好友輪流接過裝置親自操控（每回合均由錦簾防窺鎖定）。
+        </div>
+      `}
+
+      <div class="avatar-card-grid" style="grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
+        ${CHARACTERS.map((c,i)=>{
+          const isSelected = setupSelection[i];
+          const isHuman = (GAME_MODE === 'ai' && c.id === humanSelectedCharId);
+          return `
+            <div class="avatar-target-card ${isSelected?'selected':''}" style="${isHuman?'border:2px solid var(--gold); background:#fff9e6; box-shadow:0 0 0 2px rgba(184,147,63,.45);':''}" onclick="handleSetupCardClick(${i})">
+              <img src="${c.avatar}" class="char-avatar lg" onerror="this.src='https://placehold.co/100x100/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+              <div class="nm">${c.name}</div>
+              <div class="sub">${c.title} · ${c.element}</div>
+              <div style="font-size:.74rem; color:var(--crimson-dark); font-weight:700;">
+                資${c.resource} 美${c.beauty} 智${c.intel} 才${c.talent}
+              </div>
+              <div style="margin-top:4px;">
+                ${GAME_MODE==='ai' ? (
+                  isHuman 
+                    ? `<span class="pill" style="background:var(--gold); color:#2b2014; font-weight:bold;"><i class="fa-solid fa-user"></i> 您操控</span>`
+                    : (isSelected ? `<span class="pill" style="background:#e8f0fe; color:#1a73e8;"><i class="fa-solid fa-robot"></i> 電腦AI</span>` : `<span class="pill" style="color:#999;">不入宮</span>`)
+                ) : (
+                  `<div style="font-size:1.1rem; color:var(--crimson);">${isSelected?'<i class="fa-solid fa-circle-check"></i>':'<i class="fa-regular fa-circle"></i>'}</div>`
+                )}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <button class="gold" ${selectedCount<2?'disabled':''} onclick="confirmSetup(false)">
+          <i class="fa-solid fa-scroll"></i> 奉天承運 · 正式開局（共 ${selectedCount} 位入宮）
+        </button>
+        <button class="debug-btn" ${selectedCount<2?'disabled':''} onclick="confirmSetup(true)">
+          <i class="fa-solid fa-bug"></i> 除錯模式開局（無時疫 / 私通懷孕必成）
+        </button>
+      </div>
+    </div>
+    <div class="footer-note">
+      十年前實體卡牌原版數位化呈現。人機對戰模式下，AI 嬪妃將恪遵原版心計演繹，暗結珠胎與變節下毒皆深藏不露！
+    </div>
+  `;
+}
+
+function setGameMode(mode){
+  GAME_MODE = mode;
+  render();
+}
+
+function handleSetupCardClick(index){
+  const c = CHARACTERS[index];
+  if(GAME_MODE === 'ai'){
+    if(!setupSelection[index]){
+      setupSelection[index] = true;
+    }
+    humanSelectedCharId = c.id;
+  } else {
+    setupSelection[index] = !setupSelection[index];
+  }
+  render();
+}
+
+function confirmSetup(isDebug){
+  DEBUG_MODE = isDebug;
+  updateDebugUi();
+  const selectedChars = CHARACTERS.filter((c,i)=>setupSelection[i]);
+  const configs = selectedChars.map(c => ({
+    charId: c.id,
+    isAi: (GAME_MODE === 'ai' && c.id !== humanSelectedCharId)
+  }));
+  initGame(configs);
+  render();
+}
+
+/* ================= 2. 玩家行動階段 ================= */
+function renderPlayerTurn(){
+  if(G.orderPos >= G.order.length){ G.phase='event'; render(); return; }
+  const p = currentPlayer();
+  const c = charOf(p.charId);
+
+  if(p.isAi && G.turnStep !== 'dixieAnim' && G.turnStep !== 'actionResult'){
+    renderAiThinkingTurn(p);
+    return;
+  }
+
+  if(G.turnStep==='gate'){
+    app.innerHTML = `
+      <div class="card gate">
+        <p class="muted">六宮深闈重地，請將裝置交予主位小主親啟：</p>
+        <div style="display:flex; justify-content:center; margin:14px 0;">
+          <img src="${c.avatar}" class="char-avatar lg" onerror="this.src='https://placehold.co/120x120/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+        </div>
+        <div class="name">${c.name} · ${c.title}</div>
+        <div class="drama-quote">${c.quote}</div>
+        <button class="gold" onclick="revealTurn()"><i class="fa-solid fa-key"></i> 啟簾親閱 · 執掌我宮本回合</button>
+      </div>
+      ${renderLogCard()}
+    `;
+    return;
+  }
+
+  const phase = cyclePhase(p);
+  const phaseLabel = { menses:'【月經期】(氣血虧虛·嚴禁侍寢)', follicular:'【濾泡期】(侍寢無法受孕)', ovulation:'【排卵期】(龍裔天降·受孕黃金期)' }[phase];
+  const sick = G.round <= p.sickUntil;
+
+  let body = '';
+  if(G.turnStep==='overview'){
+    body = `
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; background:#fffcf2; padding:8px 12px; border:1px solid var(--gold);">
+        <img src="${c.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/80x80/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+        <div style="flex:1;">
+          <div style="font-family:'Noto Serif TC',serif; font-weight:700; color:var(--crimson-dark); font-size:1.05rem;">
+            ${c.name} · ${c.title} <span class="pill" style="background:#f2e6cb;">屬性：${c.element}</span>
+          </div>
+          <div style="font-size:.78rem; color:#786954;">阿哥：<b style="color:var(--crimson);">${p.princes}</b> 位 ｜ 公主：<b style="color:var(--jade);">${p.princesses}</b> 位 ｜ ${p.pregnancy?`<b style="color:var(--crimson);">身懷六甲（第 ${G.round - p.pregnancy.startRound + 1} 回合）</b>`:'未孕'}</div>
+        </div>
+      </div>
+
+      <div class="statgrid">
+        <div><div class="num">${effectiveStat(p,'beauty')}</div><div class="lbl">美貌</div></div>
+        <div><div class="num">${effectiveStat(p,'intel')}</div><div class="lbl">智能</div></div>
+        <div><div class="num">${effectiveStat(p,'talent')}</div><div class="lbl">才藝</div></div>
+        <div><div class="num" style="font-size:.9rem; color:var(--crimson-dark);">${phaseLabel}</div><div class="lbl">月經週期（天機莫洩）</div></div>
+      </div>
+
+      <p class="muted">
+        宮人編制：宮女×${p.maids}${p.staffTurned.maid ? `<b style="color:var(--crimson);">（${p.staffTurned.maid}人變節）</b>` : ''}　
+        太監×${p.eunuchs}${p.staffTurned.eunuch ? `<b style="color:var(--crimson);">（${p.staffTurned.eunuch}人變節）</b>` : ''}　
+        太醫×${p.physicians}${p.staffTurned.physician ? `<b style="color:var(--crimson);">（${p.staffTurned.physician}人變節）</b>` : ''}
+        ${sick ? '<br><b style="color:var(--crimson);"><i class="fa-solid fa-bed"></i> 抱恙臥病中（本回合無法行動）</b>':''}
+      </p>
+
+      ${renderStatusEffects(p)}
+      ${renderSkillPanel(p)}
+      ${renderHandManager(p)}
+
+      <div class="row" style="margin-top:14px;">
+        <button class="gold" onclick="drawItemCard()"><i class="fa-solid fa-box-archive"></i> 步向內務府 · 抽取一張道具卡</button>
+      </div>
+    `;
+  } else if(G.turnStep==='itemDrawn'){
+    const it = itemOf(G.lastDrawnItem);
+    body = `
+      <p>內務府呈送上來了新物件：</p>
+      <div class="itemrow" style="border-color:var(--crimson);">
+        <span><span class="nm">${it.name}</span><span class="ds">${it.desc}</span></span>
+        <span class="pill" style="background:#f7e5c8;">${it.cat==='equip'?'穿戴飾品':(it.cat==='poison'?'暗害毒物':'養生補藥')}</span>
+      </div>
+      ${it.cat==='equip' || it.equippable ? `
+        <div class="row" style="margin-top:10px;">
+          <button class="gold" onclick="equipItem('${it.id}')"><i class="fa-solid fa-gem"></i> 即刻穿戴/佩戴</button>
+          <span class="muted" style="align-self:center;">（亦可先收入妝匣，待關鍵時機再行穿戴）</span>
+        </div>
+      ` : ''}
+      ${renderStatusEffects(p)}
+      ${renderSkillPanel(p)}
+      ${renderHandManager(p)}
+      <div class="row" style="margin-top:14px;">
+        <button class="gold" onclick="proceedToActions()"><i class="fa-solid fa-wand-magic-sparkles"></i> 繼續：抽 3 張行動卡擇一籌謀</button>
+      </div>
+    `;
+  } else if(G.turnStep==='chooseAction'){
+    if(sick){
+      body = `
+        <div class="drama-quote"><span>「小主玉體欠安，太醫叮囑需安心靜養，切不可勞心費神……」</span></div>
+        <p class="muted">你目前重病臥病，本回合無法執行任何普通或秘密行動。</p>
+        <div class="row"><button class="gold" onclick="endPlayerTurn()"><i class="fa-solid fa-check"></i> 結束本宮回合</button></div>
+      `;
+    } else {
+      body = `
+        <p class="muted">心腹自前朝內務府取來了 3 張行動簽籌，請擇一施行：</p>
+        ${G.currentActionChoices.map(aid=>{
+          const a = actionOf(aid);
+          return `
+            <div class="choice-card" onclick="chooseAction('${aid}')">
+              <h4>${a.name} <span class="pill" style="background:${a.kind==='secret'?'#e6f4ea':'#fce8e6'}; color:${a.kind==='secret'?'#137333':'#c5221f'};">${a.kind==='secret'?'秘密行動':'普通行動'}</span></h4>
+              <p>${a.desc}</p>
+            </div>
+          `;
+        }).join('')}
+        ${renderStatusEffects(p)}
+        ${renderSkillPanel(p)}
+        ${renderHandManager(p)}
+      `;
+    }
+  } else if(G.turnStep==='resolveAction'){
+    body = renderActionForm(p);
+  } else if(G.turnStep==='poisonAnim'){
+    body = renderPoisonAnimView(p);
+  } else if(G.turnStep==='dixieAnim'){
+    body = renderDixieAnimView(p);
+  } else if(G.turnStep==='actionResult'){
+    body = `
+      <div class="drama-quote">${G.lastActionResultText}</div>
+      ${renderHandManager(p)}
+      <div class="row" style="margin-top:14px;">
+        <button class="gold" onclick="endPlayerTurn()"><i class="fa-solid fa-arrow-right"></i> 移交裝置 · 換下一位小主起居</button>
+      </div>
+    `;
+  }
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>${c.name}之宮室起居 <span class="tag">第 ${G.round} 回合</span></h2>
+      ${body}
+    </div>
+    ${renderLogCard()}
+  `;
+}
+
+function renderAiThinkingTurn(p){
+  const c = charOf(p.charId);
+  app.innerHTML = `
+    <div class="card" style="text-align:center; padding:32px 16px;">
+      <div style="display:flex; justify-content:center; margin-bottom:12px;">
+        <img src="${c.avatar}" class="char-avatar lg fa-beat" style="animation-duration: 2s;" onerror="this.src='https://placehold.co/100x100/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+      </div>
+      <h2 style="justify-content:center; margin:0 0 6px;">${c.name} · ${c.title} <span class="pill" style="background:#e8f0fe; color:#1a73e8; font-size:.7rem;">電腦 AI</span></h2>
+      <p class="muted"><i class="fa-solid fa-spinner fa-spin"></i> 深宮寢殿悄掩宮門，小主正在暗中審度局勢與籌謀行事…</p>
+      <div class="drama-quote" style="max-width:460px; margin:10px auto;"><span>${c.quote}</span></div>
+    </div>
+    ${renderLogCard()}
+  `;
+
+  if(G._aiTimeout){
+    clearTimeout(G._aiTimeout);
+  }
+  G._aiTimeout = setTimeout(() => {
+    G._aiTimeout = null;
+    executeAiTurn(p);
+  }, AI_SPEED);
+}
+
+function executeAiTurn(p){
+  let willHandleSpecialTransition = false;
+  try {
+    const c = charOf(p.charId);
+    const sick = G.round <= p.sickUntil;
+
+    // 1. AI 步向內務府抽道具卡
+    let pool = ITEM_POOL.filter(x => x.cat !== 'special');
+    if(DEBUG_MODE) pool = pool.filter(x => x.id !== 'shiyibeizu');
+    const drawnItem = pick(pool);
+    p.hand.push(drawnItem.id);
+
+    // 2. AI 穿戴/使用合適之道具
+    if(drawnItem.cat === 'equip' || drawnItem.equippable){
+      equipItemDirect(p, drawnItem.id);
+    }
+    const usableTonics = p.hand.filter(iid => {
+      const it = itemOf(iid);
+      return isUsableTonic(it) && (!it.onlyTarget || it.onlyTarget === p.charId);
+    });
+    if(usableTonics.length > 0){
+      const useIid = usableTonics[0];
+      useItemDirect(p, useIid);
+    }
+
+    // 3. AI 特技判斷
+    // 安陵容製香
+    if(p.charId === 'anda_ying' && (p.skillUsesLeft['chenshui'] || 0) > 0 && p.hand.length > 0){
+      const hasPoison = p.hand.some(iid => itemOf(iid).cat === 'poison');
+      if(!hasPoison){
+        const srcIid = p.hand[0];
+        const srcIdx = p.hand.indexOf(srcIid);
+        p.hand.splice(srcIdx, 1, 'shexiang');
+        p.skillUsesLeft['chenshui']--;
+        addLog(`【沉水暗香·巧手調香】安陵容素手撥香匙，悄無聲息地將手中道具研磨精製合成了奇香「麝香」！`, { type:'drama' });
+      }
+    }
+
+    // 沈眉莊天仙媚酒
+    if(p.charId === 'huiguiren' && cyclePhase(p) === 'ovulation' && (p.skillUsesLeft['tianxian'] || 0) > 0){
+      p.skillUsesLeft['tianxian']--;
+      addLog(`【天仙媚酒】惠貴人藉御酒之意深夜私通幽會！`, { type:'drama' });
+      const result = performPregnancyRoll(p);
+      if(result.pregnant){
+        p.pregnancy = { startRound: G.round, fromSitong: true };
+      }
+      endPlayerTurn();
+      return;
+    }
+
+    // 皇后/甄嬛增益特技
+    c.skills.forEach(s => {
+      if(SELF_BUFF_SKILL_TYPES.includes(s.type) && skillAvailable(p, s.key)){
+        if(s.type === 'active-allstats'){
+          ['beauty','intel','talent'].forEach(stat => p.buffs.push({ stat, amount:s.amount, untilRound:G.round+1 }));
+          useSkillCooldown(p, s.key, s.cooldown);
+          addLog(`【純元護體】${c.name}哭訴先皇后深情往事，本回合全能力 +${s.amount}！`, { type:'drama' });
+        } else if(s.type === 'active-beautytalent'){
+          p.buffs.push({ stat:'beauty', amount:s.amount, untilRound:G.round+1 });
+          p.buffs.push({ stat:'talent', amount:s.amount, untilRound:G.round+1 });
+          useSkillCooldown(p, s.key, s.cooldown);
+          addLog(`【蝶舞飛仙】${c.name}翩躚一舞，美貌與才藝各 +${s.amount}！`, { type:'drama' });
+        }
+      }
+    });
+
+    if(sick){
+      endPlayerTurn();
+      return;
+    }
+
+    // 4. 抽取 3 張行動卡並進入 AI 策略樹
+    const actionChoices = shuffle(ACTION_CARDS.map(a => a.id)).slice(0, 3);
+    const others = otherAlivePlayers(p);
+    if(!others.length){
+      endPlayerTurn();
+      return;
+    }
+
+    if(!p.knownSitong) p.knownSitong = {};
+
+    const confirmedSitongTarget = others.find(o => o.pregnancy && p.knownSitong[o.idx] === true);
+    const uninvestigatedPregTarget = others.find(o => o.pregnancy && p.knownSitong[o.idx] === undefined);
+
+    let target = confirmedSitongTarget || others.find(o => o.pregnancy) || others.slice().sort((a,b)=>(b.princes*2 + b.princesses) - (a.princes*2 + a.princesses))[0];
+
+    const poisonsInHand = p.hand.filter(iid => itemOf(iid).cat === 'poison');
+    const phase = cyclePhase(p);
+
+    let chosenAid = actionChoices[0];
+
+    /* ================= AI 滴血認親與深度宮鬥策略樹 ================= */
+    // 策略 A：【景仁宮大審·致命絕殺】若握有私通鐵證，且抽到滴血認親，直接發起大審，+2骰絕殺對手！
+    if(actionChoices.includes('dixie') && confirmedSitongTarget){
+      chosenAid = 'dixie';
+      target = confirmedSitongTarget;
+    }
+    // 策略 A2：【皇后特權發難】皇后發動滴血認親毫無懲罰代價！若場上有身懷六甲之敵手，皇后可果斷指控
+    else if(actionChoices.includes('dixie') && p.charId === 'huanghou' && others.some(o => o.pregnancy)){
+      chosenAid = 'dixie';
+      target = others.find(o => o.pregnancy);
+    }
+    // 策略 B：【私通】排卵期且未孕，把握奪嫡受孕良機
+    else if(actionChoices.includes('sitong') && phase === 'ovulation' && !p.pregnancy){
+      chosenAid = 'sitong';
+    }
+    // 策略 C：【把平安脈】場上有懷孕對手但底細不明，派太醫查明是否為私通龍脈
+    else if(actionChoices.includes('baping') && uninvestigatedPregTarget && p.physicians > 0){
+      chosenAid = 'baping';
+      target = uninvestigatedPregTarget;
+    }
+    // 策略 D：【下毒】持有毒藥，暗害領先者或孕婦
+    else if(actionChoices.includes('poison') && poisonsInHand.length > 0){
+      chosenAid = 'poison';
+    }
+    // 策略 E：【煽動】策反他宮宮人
+    else if(actionChoices.includes('persuade')){
+      chosenAid = 'persuade';
+    }
+    // 策略 F：【偷竊】盜取對手穿戴首飾
+    else if(actionChoices.includes('steal') && others.some(o => o.equipped.length > 0) && p.eunuchs > 0){
+      chosenAid = 'steal';
+    }
+    // 策略 G：【常規把脈】
+    else if(actionChoices.includes('baping') && p.physicians > 0){
+      chosenAid = 'baping';
+    }
+    // 策略 H：【避險】非皇后若抽到滴血認親但並無私通鐵證，絕不盲目誣告自尋死路
+    else if(chosenAid === 'dixie' && !confirmedSitongTarget && p.charId !== 'huanghou'){
+      const alt = actionChoices.find(a => a !== 'dixie');
+      if(alt) chosenAid = alt;
+    }
+
+    if(chosenAid === 'dixie'){
+      willHandleSpecialTransition = true;
+      G.pendingAction = { id:'dixie', targetIdx: target.idx };
+      addLog(`【景仁宮風雲起】${c.name}毅然出列，當眾指控${charOf(target.charId).name}混淆皇室血脈，奏請滴血認親！`, { type:'drama' });
+      resolveDixie();
+      return;
+    } else {
+      executeAiAction(p, chosenAid, target, poisonsInHand);
+    }
+  } catch(e) {
+    console.warn("AI 行動執行異常防護：", e);
+  } finally {
+    if(!willHandleSpecialTransition){
+      endPlayerTurn();
+    }
+  }
+}
+
+function executeAiAction(p, aid, target, poisonsInHand){
+  const c = charOf(p.charId);
+  const tc = charOf(target.charId);
+
+  switch(aid){
+    case 'sitong': {
+      const result = performPregnancyRoll(p);
+      if(result.pregnant){
+        p.pregnancy = { startRound: G.round, fromSitong: true };
+      }
+      addLog(`${c.name}於夜色闌珊之際掩上宮門，悄然執行了一項秘密行動……`, { secret:true, revealRound:G.round+1 });
+      break;
+    }
+    case 'poison': {
+      if(!poisonsInHand.length) break;
+      const iid = poisonsInHand[0];
+      const it = itemOf(iid);
+      consumeItem(p, iid);
+
+      const baseIntel = effectiveStat(p, 'intel');
+      let dice = Math.max(1, Math.floor(baseIntel / 2));
+      const targetSkill = charOf(target.charId).skills.find(s => s.type === 'passive-poisonresist');
+      if(targetSkill) dice = Math.max(1, Math.floor(dice / 2));
+
+      const need = it.check || [];
+      const rolls = Array.from({ length:dice }, () => rollDie());
+      const success = need.length > 0 ? rolls.some(r => need.includes(r)) : true;
+
+      let logTxt = `【深宮投毒】${c.name}命人對${tc.name}施放「${it.name}」，智能考驗擲出：${rolls.join('、')} — ${success ? '【得手成功】！' : '【功虧一簣】！'}`;
+      if(success) applyItemEffect(it, target, p);
+      addLog(logTxt, { type:'drama' });
+      break;
+    }
+    case 'persuade': {
+      let intel = effectiveStat(p, 'intel');
+      const pSkill = c.skills.find(s => s.type === 'passive-persuade');
+      if(pSkill) intel += pSkill.amount;
+      const dice = Math.max(1, Math.floor(intel / 2));
+      const rolls = Array.from({ length:dice }, () => rollDie());
+      const success = rolls.some(r => r === 5 || r === 6);
+
+      if(target.maids > (target.staffTurned.maid||0) && success){
+        target.staffTurned.maid = (target.staffTurned.maid||0) + 1;
+        addLog(`${c.name}暗中於西華門密會他宮眼線，播下了變節的種子……`, { secret:true, revealRound:G.round+1 });
+      }
+      break;
+    }
+    case 'steal': {
+      if(target.equipped.length > 0 && p.eunuchs > 0 && (p.staffTurned.eunuch||0) < p.eunuchs){
+        const stolenIid = pick(target.equipped);
+        target.equipped = target.equipped.filter(x => x !== stolenIid);
+        p.hand.push(stolenIid);
+        addLog(`【宮闈失竊】${tc.name}宮中晨起清點，發現一件佩飾不翼而飛！`, { type:'drama' });
+      }
+      break;
+    }
+    case 'baping': {
+      if(!p.knownSitong) p.knownSitong = {};
+      const isSitong = !!(target.pregnancy && target.pregnancy.fromSitong);
+      p.knownSitong[target.idx] = isSitong;
+      if(isSitong){
+        addLog(`【平安脈秘奏】${c.name}派遣太醫探得${tc.name}所懷確非龍種，乃是【私通孽胎】！殺機已現……`, { secret:true, revealRound:G.round+1 });
+      } else {
+        addLog(`${c.name}宣召太醫密探${tc.name}之脈象，洞悉了六宮深閨秘辛。`);
+      }
+      break;
+    }
+    case 'zhangbi': {
+      for(const role of ['maid', 'eunuch', 'physician']){
+        if((p.staffTurned[role] || 0) > 0){
+          p[role==='maid'?'maids':(role==='eunuch'?'eunuchs':'physicians')]--;
+          p.staffTurned[role]--;
+          addLog(`【重刑整飭宮規】${c.name}當場杖斃了一名變節叛奴，肅清門戶！`, { type:'drama' });
+          break;
+        }
+      }
+      break;
+    }
+  }
+}
+
+function equipItemDirect(p, iid){
+  const idx = p.hand.indexOf(iid);
+  if(idx >= 0){
+    p.hand.splice(idx, 1);
+    p.equipped.push(iid);
+    const it = itemOf(iid);
+    if(it.duration){
+      if(!p.equippedExp) p.equippedExp = {};
+      p.equippedExp[iid] = G.round + it.duration;
+    }
+    if(it.pregPenalty){
+      p.pregDelta = (p.pregDelta || 0) + it.pregPenalty;
+    }
+    addLog(`【步搖生姿】${charOf(p.charId).name}將「${it.name}」妥帖穿戴佩戴於身！`, { type:'drama' });
+  }
+}
+
+function useItemDirect(p, iid){
+  const it = itemOf(iid);
+  consumeItem(p, iid);
+  switch(it.effect){
+    case 'preventMiscarry': p.preventMiscarryUntil = G.round + it.duration; break;
+    case 'shield': p.shieldCount = (p.shieldCount || 0) + 1; break;
+    case 'doubleFavor': G.doubleFavorRound = G.round; break;
+    case 'pregDebuff': p.pregDelta = (p.pregDelta || 0) + it.amount; break;
+    case 'cureOne': { const idx = p.buffs.findIndex(b => b.amount < 0); if(idx >= 0) p.buffs.splice(idx, 1); break; }
+    case 'buff': p.buffs.push({ stat:it.stat, amount:it.amount, untilRound:G.round + it.duration }); break;
+    case 'forceOvulation': { const c = charOf(p.charId).cycle; p.cycleClock = c.m + c.f; break; }
+  }
+}
+
+function renderStatusEffects(p){
+  const bits = [];
+  if(p.preventMiscarryUntil >= G.round){
+    bits.push(`<i class="fa-solid fa-shield-heart"></i> 安胎護脈中（尚餘 ${p.preventMiscarryUntil - G.round + 1} 回合防止滑胎）`);
+  }
+  if(p.shieldCount > 0){
+    bits.push(`<i class="fa-solid fa-shield-halved"></i> 東阿阿膠護體金鐘（抵禦負面厄運：${p.shieldCount} 次）`);
+  }
+  if(p.pregDelta !== 0){
+    bits.push(`<i class="fa-solid fa-pills"></i> 胞宮調理：下次受孕${p.pregDelta > 0 ? '多':'少'}抽 ${Math.abs(p.pregDelta)} 張數字卡`);
+  }
+  if(!bits.length) return '';
+  return `<p class="muted" style="color:var(--jade); background:#f0f9f5; padding:6px 10px; border-left:3px solid var(--jade);">${bits.join('<br>')}</p>`;
+}
+
+const SELF_BUFF_SKILL_TYPES = ['active-allstats','active-beautytalent'];
+
+function renderSkillPanel(p){
+  const c = charOf(p.charId);
+  const usable = c.skills.filter(s => SELF_BUFF_SKILL_TYPES.includes(s.type));
+  const isAn = p.charId === 'anda_ying';
+  const chenshuiUses = p.skillUsesLeft ? (p.skillUsesLeft['chenshui'] || 0) : 0;
+  
+  const isMei = p.charId === 'huiguiren';
+  const meiSkill = isMei ? c.skills.find(s => s.key === 'tianxian') : null;
+  const meiUsable = meiSkill && (p.skillUsesLeft['tianxian'] > 0) && (cyclePhase(p) === 'ovulation');
+
+  if(!usable.length && !isAn && !meiUsable) return '';
+  return `
+    <div class="fieldset">
+      <label><i class="fa-solid fa-wand-magic-sparkles"></i> 六宮主位特技</label>
+      <div class="itemlist">
+        ${usable.map(s => {
+          const avail = skillAvailable(p, s.key);
+          const remain = avail ? 0 : (p.skillCooldownUntil[s.key] - G.round);
+          return `
+            <div class="itemrow">
+              <span><span class="nm">${s.name}</span><span class="ds">${s.desc}</span></span>
+              ${avail ? `<button onclick="useCharSkill('${s.key}')"><i class="fa-solid fa-bolt"></i> 發動</button>`
+                      : `<span class="muted" style="font-size:.75rem;">冷卻中（剩 ${remain} 回合）</span>`}
+            </div>
+          `;
+        }).join('')}
+        ${meiUsable ? `
+          <div class="itemrow" style="background:#fffcf2; border-color:var(--gold);">
+            <span>
+              <span class="nm" style="color:var(--crimson-dark);"><i class="fa-solid fa-wine-glass"></i> 天仙媚酒</span>
+              <span class="pill" style="background:#f0e4c8; font-weight:bold; color:#6d4814;">排卵期專屬特技</span>
+              <br><span class="ds">${meiSkill.desc}</span>
+            </span>
+            <button class="gold" onclick="useTianxianMeijiu()"><i class="fa-solid fa-moon"></i> 發動私通</button>
+          </div>
+        ` : (isMei && p.skillUsesLeft['tianxian'] > 0 && cyclePhase(p) !== 'ovulation' ? `
+          <div class="itemrow">
+            <span><span class="nm">天仙媚酒</span><span class="ds">（須於排卵期方可發動天仙媚酒強制私通）</span></span>
+            <span class="muted" style="font-size:.75rem;">等待排卵期</span>
+          </div>
+        ` : '')}
+        ${isAn ? `
+          <div class="itemrow" style="background:#fffcf2; border-color:var(--gold);">
+            <span>
+              <span class="nm" style="color:var(--crimson-dark);"><i class="fa-solid fa-mortar-pestle"></i> 沉水暗香</span>
+              <span class="pill" style="background:#f0e4c8; font-weight:bold; color:#6d4814;">剩餘 ${chenshuiUses} / 3 次</span>
+              <br><span class="ds">深諳製香秘術，可將手中任一道具轉化為麝香、歡宜香、舒痕膠、凝露香或息肌丸。</span>
+            </span>
+            ${chenshuiUses > 0 
+              ? `<button class="gold" onclick="openChenshuiModal()"><i class="fa-solid fa-wand-magic-sparkles"></i> 凝香煉化</button>`
+              : `<span class="muted" style="font-size:.75rem;">（三度製香機緣已盡）</span>`}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function useCharSkill(key){
+  const p = currentPlayer();
+  const c = charOf(p.charId);
+  const s = c.skills.find(sk => sk.key === key);
+  if(!s || !skillAvailable(p, key)) return;
+  if(s.type === 'active-allstats'){
+    ['beauty','intel','talent'].forEach(stat => p.buffs.push({ stat, amount:s.amount, untilRound:G.round+1 }));
+    useSkillCooldown(p, key, s.cooldown);
+    addLog(`【純元護體】${c.name}哭訴先皇后深情往事，皇上百感交集，本回合全能力 +${s.amount}！`, { type:'drama' });
+  } else if(s.type === 'active-beautytalent'){
+    p.buffs.push({ stat:'beauty', amount:s.amount, untilRound:G.round+1 });
+    p.buffs.push({ stat:'talent', amount:s.amount, untilRound:G.round+1 });
+    useSkillCooldown(p, key, s.cooldown);
+    addLog(`【蝶舞飛仙】${c.name}溫泉藏蝶翩躚一舞，引得龍顏大悅，美貌與才藝各 +${s.amount}！`, { type:'drama' });
+  }
+  render();
+}
+
+function useTianxianMeijiu(){
+  const p = currentPlayer();
+  if(p.charId !== 'huiguiren' || cyclePhase(p) !== 'ovulation' || (p.skillUsesLeft['tianxian']||0) <= 0) return;
+  p.skillUsesLeft['tianxian']--;
+  addLog(`【天仙媚酒】惠貴人深宮寂寞鬱鬱寡歡，藉御酒之意深夜私通幽會！`, { type:'drama' });
+  
+  const result = performPregnancyRoll(p);
+  if(result.pregnant){
+    p.pregnancy = { startRound: G.round, fromSitong: true };
+  }
+  G.pregAnimResult = result;
+  G.pregAnimTarget = p.idx;
+  G.pregAnimMode = 'sitong';
+  G.phase = 'pregnancyGate';
+  G.pregnancyGateRevealed = true;
+  G.pregAnim = { stage:'die-rolling', _started:false };
+  render();
+}
+
+function renderHandManager(p){
+  const isAn = p.charId === 'anda_ying';
+  const chenshuiUses = p.skillUsesLeft ? (p.skillUsesLeft['chenshui'] || 0) : 0;
+  return `
+    <div class="fieldset">
+      <label><i class="fa-solid fa-treasure-chest"></i> 妝匣行囊（僅自己可見）</label>
+      <div class="itemlist">
+        ${p.hand.length ? p.hand.map(iid => {
+          const it = itemOf(iid);
+          const canEquip = it.cat === 'equip' || !!it.equippable;
+          const usable = isUsableTonic(it);
+          const blockedByOnlyTarget = it.onlyTarget && p.charId !== it.onlyTarget;
+          let btn = '';
+          if(canEquip) btn = `<button onclick="equipItem('${iid}')"><i class="fa-solid fa-gem"></i> 裝備</button>`;
+          else if(usable){
+            btn = blockedByOnlyTarget
+              ? `<span class="muted" style="font-size:.72rem;">（僅${charOf(it.onlyTarget).name}服之有效）</span>`
+              : `<button onclick="useItem('${iid}')"><i class="fa-solid fa-spoon"></i> 服用</button>`;
+          }
+          const chenshuiBtn = (isAn && chenshuiUses > 0)
+            ? `<button class="secondary" style="padding:4px 7px; font-size:.74rem; border-color:var(--gold); color:#7a5518;" onclick="openChenshuiModal('${iid}')" title="使用沉水暗香以此道具煉製奇香"><i class="fa-solid fa-mortar-pestle"></i> 煉香</button>`
+            : '';
+          return `
+            <div class="itemrow">
+              <span><span class="nm">${it.name}</span><span class="ds">${it.desc}</span></span>
+              <span style="display:inline-flex; gap:6px; align-items:center;">${chenshuiBtn}${btn}</span>
+            </div>
+          `;
+        }).join('') : '<div class="muted">（兩手空空，尚無任何私藏）</div>'}
+      </div>
+      ${p.equipped.length ? `
+        <label style="margin-top:10px;"><i class="fa-solid fa-vest-patches"></i> 宮裝飾物（已穿戴/佩戴·不可卸下）</label>
+        <div class="itemlist">
+          ${p.equipped.map(iid => {
+            const it = itemOf(iid);
+            const exp = (p.equippedExp && p.equippedExp[iid]) ? p.equippedExp[iid] : null;
+            const remainText = exp ? `<span class="pill" style="background:#fff0f0; color:var(--crimson); border-color:#e0a0a0;">尚餘 ${Math.max(1, exp - G.round)} 回合</span>` : '<span class="pill">常駐佩戴</span>';
+            return `<div class="itemrow" style="background:#f4fbf7; border-color:#99cfb6;"><span><span class="nm">${it.name}</span>${remainText}<span class="ds">${it.desc}</span></span></div>`;
+          }).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function isUsableTonic(it){
+  return it.cat==='tonic' && ['preventMiscarry','shield','doubleFavor','pregDebuff','cureOne','buff','forceOvulation'].includes(it.effect);
+}
+
+function useItem(iid){
+  const p = currentPlayer();
+  const it = itemOf(iid);
+  if(it.onlyTarget && p.charId !== it.onlyTarget) return;
+  consumeItem(p, iid);
+  let text = '';
+  switch(it.effect){
+    case 'preventMiscarry':
+      p.preventMiscarryUntil = G.round + it.duration;
+      text = `服下了「${it.name}」，神清氣爽，防止滑胎保胎效力持續 ${it.duration} 回合！`;
+      break;
+    case 'shield':
+      p.shieldCount = (p.shieldCount || 0) + 1;
+      text = `服下了名貴的「${it.name}」，獲得東阿阿膠金鐘護體，下次遭逢厄運時將化險為夷！`;
+      break;
+    case 'doubleFavor':
+      G.doubleFavorRound = G.round;
+      text = `命人端上了滾燙的「${it.name}」，皇上龍精虎猛，本回合爭寵前二名小主皆將同沐龍恩！`;
+      break;
+    case 'pregDebuff':
+      p.pregDelta = (p.pregDelta || 0) + it.amount;
+      text = `服下了「${it.name}」，下一次懷孕檢定將${it.amount>0?'多':'少'}抽 ${Math.abs(it.amount)} 張數字卡！`;
+      break;
+    case 'cureOne':
+      { const idx = p.buffs.findIndex(b => b.amount < 0); if(idx >= 0) p.buffs.splice(idx, 1); }
+      text = `服用了清熱解毒的「${it.name}」，體內毒素盡消，解除了一項負面狀態！`;
+      break;
+    case 'buff':
+      p.buffs.push({ stat:it.stat, amount:it.amount, untilRound:G.round + it.duration });
+      text = `服用了「${it.name}」，只覺氣色紅潤，${{beauty:'美貌',talent:'才藝',intel:'智能'}[it.stat]} +${it.amount}，持續 ${it.duration} 回合！`;
+      break;
+    case 'forceOvulation':
+      { const c = charOf(p.charId).cycle; p.cycleClock = c.m + c.f; }
+      text = `暗服了太醫密授的「${it.name}」，氣血奔湧，強制進入最佳受孕之【排卵期】！`;
+      break;
+  }
+  addLog(`${charOf(p.charId).name}：${text}`, { type:'drama' });
+  render();
+}
+
+/* ================= 沉水暗香專屬轉換邏輯 ================= */
+const CHENSHUI_TARGET_ITEMS = [
+  { id:'shexiang', name:'麝香', desc:'指定對象滑胎（智能檢定：4,5,6）', cat:'poison' },
+  { id:'huanyixiang', name:'歡宜香', desc:'指定對象下次懷孕檢定少抽一張數字卡', cat:'poison' },
+  { id:'shuhenjiao', name:'舒痕膠', desc:'累積兩次方可滑胎（僅安答應可持續持有）', cat:'poison' },
+  { id:'nengluxiang', name:'凝露香', desc:'美貌+5持續3回合（可直接佩戴；副作用：受孕少抽1卡）', cat:'poison' },
+  { id:'xijiwan', name:'息肌丸', desc:'美貌+10持續1回合（可直接佩戴；副作用：受孕少抽1卡）', cat:'poison' }
+];
+
+function openChenshuiModal(preselectedIid){
+  const p = currentPlayer();
+  if(!p || p.charId !== 'anda_ying') return;
+  const usesLeft = p.skillUsesLeft ? (p.skillUsesLeft['chenshui'] || 0) : 0;
+  if(usesLeft <= 0){
+    showPalaceModal('沉水暗香', '<p class="muted">小主此生製香機緣已盡，三度調香神技已全數耗用。</p>');
+    return;
+  }
+  if(!p.hand.length){
+    showPalaceModal('沉水暗香', '<p class="muted">小主袖中空空如也，無任何原材道具可供碾碎入香。</p>');
+    return;
+  }
+
+  const defaultIid = (preselectedIid && p.hand.includes(preselectedIid)) ? preselectedIid : p.hand[0];
+  const bodyHtml = `
+    <div style="font-size:.88rem; line-height:1.6;">
+      <div class="drama-quote" style="margin:0 0 10px;">
+        「製香一道，最重火候與心意。宮裡的人只知百合沉香，哪曉得暗香引動氣血的奧秘……」
+      </div>
+      <p class="muted">【沉水暗香】特技：可將手中任何道具化腐朽為神奇，精煉為指定之奇毒暗香。<br>
+      <b style="color:var(--crimson);">尚可施展：${usesLeft} / 3 次</b></p>
+      
+      <div class="fieldset">
+        <label><i class="fa-solid fa-box-open"></i> 擇取做為原材之手牌道具：</label>
+        <select id="f_chenshui_source">
+          ${p.hand.map(iid => {
+            const it = itemOf(iid);
+            return `<option value="${iid}" ${iid===defaultIid?'selected':''}>${it.name}（${it.desc}）</option>`;
+          }).join('')}
+        </select>
+      </div>
+
+      <div class="fieldset">
+        <label><i class="fa-solid fa-mortar-pestle"></i> 欲煉化合成為何種奇香秘藥：</label>
+        <div class="itemlist" style="margin-top:6px;">
+          ${CHENSHUI_TARGET_ITEMS.map((target, idx) => `
+            <label class="choice-card" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:6px; padding:8px 10px; ${idx===0?'border-color:var(--crimson); background:#fff9f0;':''}" id="lbl_cs_${target.id}">
+              <input type="radio" name="chenshui_dest" value="${target.id}" ${idx===0?'checked':''} style="margin-top:4px; width:auto;" onchange="updateChenshuiSelect('${target.id}')">
+              <div style="flex:1;">
+                <div style="font-weight:bold; color:var(--crimson-dark); font-size:.92rem;">
+                  ${target.name}
+                  <span class="pill" style="background:${target.id==='nengluxiang'||target.id==='xijiwan'?'#ffe9d6':'#ffdada'}; color:var(--crimson); font-size:.7rem;">
+                    ${target.id==='nengluxiang'||target.id==='xijiwan'?'可佩戴暗香':'致毒暗香'}
+                  </span>
+                </div>
+                <div class="ds" style="font-size:.78rem; color:#6b6051; margin-top:2px;">${target.desc}</div>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <button class="gold" style="width:100%; justify-content:center; padding:10px;" onclick="resolveChenshuiTransform()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> 妙手調香 · 即刻凝練轉化
+        </button>
+      </div>
+    </div>
+  `;
+  showPalaceModal('安答應專屬絕技 · 沉水暗香', bodyHtml);
+}
+
+function updateChenshuiSelect(selectedId){
+  CHENSHUI_TARGET_ITEMS.forEach(t => {
+    const el = document.getElementById('lbl_cs_' + t.id);
+    if(el){
+      if(t.id === selectedId){
+        el.style.borderColor = 'var(--crimson)';
+        el.style.background = '#fff9f0';
+      } else {
+        el.style.borderColor = 'var(--line)';
+        el.style.background = 'var(--paper-card)';
+      }
+    }
+  });
+}
+
+function resolveChenshuiTransform(){
+  const p = currentPlayer();
+  if(!p || p.charId !== 'anda_ying') return;
+  const usesLeft = p.skillUsesLeft ? (p.skillUsesLeft['chenshui'] || 0) : 0;
+  if(usesLeft <= 0) return;
+
+  const sourceIid = val('f_chenshui_source');
+  const destRadio = document.querySelector('input[name="chenshui_dest"]:checked');
+  const destIid = destRadio ? destRadio.value : null;
+
+  if(!sourceIid || !destIid) return;
+  const sourceIdx = p.hand.indexOf(sourceIid);
+  if(sourceIdx === -1) return;
+
+  const oldItem = itemOf(sourceIid);
+  const newItem = itemOf(destIid);
+
+  p.hand.splice(sourceIdx, 1, destIid);
+  p.skillUsesLeft['chenshui']--;
+
+  const dramaMsg = `【沉水暗香·巧手調香】安陵容素手撥香匙，悄無聲息地將手中「${oldItem.name}」研磨煉化，精製合成了奇香「${newItem.name}」！（剩餘可製香次數：${p.skillUsesLeft['chenshui']} 次）`;
+  addLog(dramaMsg, { type:'drama' });
+
+  closePalaceModal();
+  render();
+}
+
+function equipItem(iid){
+  const p = currentPlayer();
+  const idx = p.hand.indexOf(iid);
+  if(idx >= 0){
+    p.hand.splice(idx, 1);
+    p.equipped.push(iid);
+    const it = itemOf(iid);
+    if(it.duration){
+      if(!p.equippedExp) p.equippedExp = {};
+      p.equippedExp[iid] = G.round + it.duration;
+    }
+    if(it.pregPenalty){
+      p.pregDelta = (p.pregDelta || 0) + it.pregPenalty;
+    }
+    addLog(`【步搖生姿】${charOf(p.charId).name}將「${it.name}」妥帖穿戴佩戴於身！（${it.desc}）`, { type:'drama' });
+  }
+  render();
+}
+
+function revealTurn(){ G.turnStep='overview'; render(); }
+
+function drawItemCard(){
+  const p = currentPlayer();
+  let pool = ITEM_POOL.filter(x => x.cat !== 'special');
+  if(DEBUG_MODE) pool = pool.filter(x => x.id !== 'shiyibeizu');
+  const it = pick(pool);
+  G.lastDrawnItem = it.id;
+  p.hand.push(it.id);
+  G.turnStep = 'itemDrawn';
+  render();
+}
+
+function proceedToActions(){
+  const actionPool = ACTION_CARDS.map(a => a.id);
+  G.currentActionChoices = shuffle(actionPool).slice(0, 3);
+  G.turnStep = 'chooseAction';
+  render();
+}
+
+function chooseAction(aid){
+  G.pendingAction = { id: aid, step:0, targetIdx:null };
+  G.turnStep = 'resolveAction';
+  render();
+}
+
+function endPlayerTurn(){
+  G.orderPos++;
+  G.turnStep = 'gate';
+  G.pendingAction = null;
+  render();
+}
+
+/* ================= 3. 行動表單與視覺化對手頭像選擇 ================= */
+function otherAlivePlayers(p){
+  return G.players.filter(o => o.alive && o.idx !== p.idx);
+}
+
+function renderVisualTargetSelector(selectedIdx){
+  const p = currentPlayer();
+  const others = otherAlivePlayers(p);
+  if(!others.length) return '<p class="muted">（後宮寂寥，已無其他小主）</p>';
+  return `
+    <div class="avatar-card-grid">
+      ${others.map(o => {
+        const c = charOf(o.charId);
+        const isSel = (selectedIdx === o.idx);
+        return `
+          <div class="avatar-target-card ${isSel ? 'selected':''}" onclick="selectActionTarget(${o.idx})">
+            <img src="${c.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/90x90/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+            <div class="nm">${c.name}</div>
+            <div class="sub">${c.title}</div>
+            <div style="font-size:.7rem; color:${isSel ? 'var(--crimson)':'#8a7c68'}; font-weight:bold;">
+              ${isSel ? '<i class="fa-solid fa-check"></i> 已鎖定此小主':'點擊鎖定'}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function selectActionTarget(targetIdx){
+  if(G.pendingAction){
+    G.pendingAction.targetIdx = targetIdx;
+    render();
+  }
+}
+
+function renderActionForm(p){
+  const a = actionOf(G.pendingAction.id);
+  const others = otherAlivePlayers(p);
+  if(G.pendingAction.targetIdx === null && others.length > 0){
+    G.pendingAction.targetIdx = others[0].idx;
+  }
+  const targetIdx = G.pendingAction.targetIdx;
+
+  if(a.id === 'poison'){
+    const poisons = p.hand.filter(iid => itemOf(iid).cat === 'poison');
+    if(!poisons.length){
+      return `
+        <div class="drama-quote"><span>「兩手空空，手中竟無半錢鶴頂紅或麝香……」</span></div>
+        <p class="muted">小主妝匣中無任何毒藥道具，巧婦難為無米之炊，無法執行下毒。</p>
+        <div class="row"><button class="secondary" onclick="cancelAction()"><i class="fa-solid fa-arrow-left"></i> 罷了，返回重選</button></div>
+      `;
+    }
+    const skillDie = charOf(p.charId).skills.find(s => s.type === 'active-poisondie');
+    const skillAvail = skillDie && skillAvailable(p, skillDie.key);
+    return `
+      <div class="fieldset">
+        <label><i class="fa-solid fa-crosshairs"></i> 鎖定欲下毒之主位（點選頭像）：</label>
+        ${renderVisualTargetSelector(targetIdx)}
+      </div>
+      <div class="fieldset">
+        <label><i class="fa-solid fa-skull"></i> 擇取袖中之奇毒暗藥：</label>
+        <select id="f_item">
+          ${poisons.map(iid => `<option value="${iid}">${itemOf(iid).name}（${itemOf(iid).desc}）</option>`).join('')}
+        </select>
+      </div>
+      <div class="fieldset">
+        <label><i class="fa-solid fa-user-ninja"></i> 指派何人秘密投毒：</label>
+        <select id="f_exec">
+          <option value="maid" ${p.maids < 1 ? 'disabled':''}>貼身宮女（現有 ${p.maids} 名${(p.staffTurned.maid||0)>=p.maids?'·全變節！':((p.staffTurned.maid||0)>0?`·${p.staffTurned.maid}人變節(有忠僕)`:'')}）</option>
+          <option value="eunuch" ${p.eunuchs < 1 ? 'disabled':''}>首領太監（現有 ${p.eunuchs} 名${(p.staffTurned.eunuch||0)>=p.eunuchs?'·全變節！':((p.staffTurned.eunuch||0)>0?`·${p.staffTurned.eunuch}人變節(有忠僕)`:'')}）</option>
+          <option value="physician" ${p.physicians < 1 ? 'disabled':''}>隨侍太醫（現有 ${p.physicians} 名${(p.staffTurned.physician||0)>=p.physicians?'·全變節！':((p.staffTurned.physician||0)>0?`·${p.staffTurned.physician}人變節(有忠僕)`:'')}）</option>
+        </select>
+      </div>
+      ${skillDie ? `
+        <div class="fieldset" style="background:#fffcf2; padding:8px 10px; border:1px solid var(--gold); border-radius:2px;">
+          <label style="display:flex; align-items:center; cursor:pointer;">
+            <input type="checkbox" id="f_useskill" ${skillAvail ? 'checked':'disabled'} style="width:auto; margin-right:8px;">
+            <span><b style="color:var(--crimson-dark);">發動「${skillDie.name}」</b>：${skillDie.desc} ${skillAvail ? '<span class="pill" style="background:#e8f4ec; color:#187339;">可立即施展</span>':`<span class="muted" style="font-size:.75rem;">（冷卻中，尚餘 ${p.skillCooldownUntil[skillDie.key] - G.round} 回合）</span>`}</span>
+          </label>
+        </div>
+      ` : ''}
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" onclick="resolvePoison()"><i class="fa-solid fa-flask-round-poison"></i> 命人投毒 · 展開智能檢定</button>
+        <button class="secondary" onclick="cancelAction()">取消</button>
+      </div>
+    `;
+  }
+
+  if(a.id === 'persuade'){
+    return `
+      <div class="fieldset">
+        <label><i class="fa-solid fa-crosshairs"></i> 欲策反煽動誰宮裡的奴才（點選頭像）：</label>
+        ${renderVisualTargetSelector(targetIdx)}
+      </div>
+      <div class="fieldset">
+        <label><i class="fa-solid fa-comments"></i> 意欲收買策反何種宮人：</label>
+        <select id="f_role">
+          <option value="maid">心腹宮女</option>
+          <option value="eunuch">掌事太監</option>
+          <option value="physician">請脈太醫</option>
+        </select>
+      </div>
+      <p class="muted">
+        <i class="fa-solid fa-mask"></i> <b>深宮暗樁（秘密行動）</b>：依智能點數/2 擲骰（皇后享【操偶魁儡】智能+5加成）。一旦策反成功，該宮人將<b>永久變節為您效忠</b>！往後為原主子執行任務時必定失敗反咬！
+      </p>
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" onclick="resolvePersuade()"><i class="fa-solid fa-handshake-simple"></i> 暗下銀兩 · 煽動策反</button>
+        <button class="secondary" onclick="cancelAction()">取消</button>
+      </div>
+    `;
+  }
+
+  if(a.id === 'sitong'){
+    const phase = cyclePhase(p);
+    if(phase !== 'ovulation'){
+      return `
+        <div class="drama-quote"><span>「今夕非排卵之期，縱得良宵片刻，亦難珠胎暗結……」</span></div>
+        <p class="muted">小主目前未處於受孕之【排卵期】，冒險私通亦無法受孕。</p>
+        <div class="row"><button class="secondary" onclick="cancelAction()">返回</button></div>
+      `;
+    }
+    return `
+      <div class="drama-quote"><span>「宮牆深深夜漏長，桐花台畔月如霜。情意繾綣，縱是萬劫不復，亦無悔……」</span></div>
+      <p class="muted"><b>私通（天大機密）</b>：夜會情郎，直接抽取數字卡擲天命玉骰判定受孕。</p>
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" onclick="resolveSitong()"><i class="fa-solid fa-moon"></i> 悄掩宮門 · 夜奔幽會</button>
+        <button class="secondary" onclick="cancelAction()">取消</button>
+      </div>
+    `;
+  }
+
+  if(a.id === 'dixie'){
+    return `
+      <div class="fieldset">
+        <label><i class="fa-solid fa-crosshairs"></i> 於景仁宮指控誰的皇嗣血脈不正（點選頭像）：</label>
+        ${renderVisualTargetSelector(targetIdx)}
+      </div>
+      <div class="drama-quote"><span>「若這碗水裡有白礬，無論是誰的血融在一起，都是天理不容的冤枉！」</span></div>
+      <p class="muted" style="color:var(--crimson);">
+        <i class="fa-solid fa-scale-balanced"></i> <b>景仁宮審判制 · 智能對決</b>：雙方依各自【智能 ÷ 2】擲出天命玉骰比大小（點數大者勝）：<br>
+        • <b>若目標實為私通受孕</b>：指控方握有鐵證，享<b>【鐵證如山】額外多擲 2 顆玉骰</b>！指控方勝則對方當場賜死出局；對方勝則指控方扣光手牌並禁足 2 回合。<br>
+        • <b>若目標為天子正統龍胎或未懷孕</b>：目標身正蒙天子庇佑，享<b>【皇權庇佑】額外多擲 2 顆玉骰</b>！指控方敗則犯大不敬死罪<b>當場杖斃出局</b>；指控方勝則目標屈打成招美貌 -5 點（若有孕則滑胎）。
+        ${p.charId === 'huanghou' ? '<br><b style="color:var(--gold);"><i class="fa-solid fa-crown"></i>【中宮母儀特權】皇后若為指控方，即便審判失利亦蒙聖恩體諒，不受沒收手牌、禁足或杖斃等任何不利懲罰！</b>' : ''}
+      </p>
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" style="background:var(--crimson);" onclick="resolveDixie()">
+          <i class="fa-solid fa-scale-balanced"></i> 奏請皇上太后 · 景仁宮滴血對質！
+        </button>
+        <button class="secondary" onclick="cancelAction()">按捺時機，退下</button>
+      </div>
+    `;
+  }
+
+  if(a.id === 'baping'){
+    if(p.physicians < 1){
+      return `
+        <p class="muted">小主宮中目前無太醫伺候，無法強行請脈。</p>
+        <div class="row"><button class="secondary" onclick="cancelAction()">返回</button></div>
+      `;
+    }
+    return `
+      <div class="fieldset">
+        <label><i class="fa-solid fa-crosshairs"></i> 派遣太醫強行為哪位小主探脈（點選頭像）：</label>
+        ${renderVisualTargetSelector(targetIdx)}
+      </div>
+      <p class="muted">派遣隨侍太醫扣腕問疾，將能<b>完全洞悉對方的經期進展與隱蔽孕脈（包含是否私通懷胎）</b>。</p>
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" onclick="resolveBaping()"><i class="fa-solid fa-stethoscope"></i> 命太醫叩門 · 藉故把脈</button>
+        <button class="secondary" onclick="cancelAction()">取消</button>
+      </div>
+    `;
+  }
+
+  if(a.id === 'gift'){
+    if(!p.hand.length){
+      return `
+        <p class="muted">妝匣空空，並無未裝備的手牌可資贈送。</p>
+        <div class="row"><button class="secondary" onclick="cancelAction()">返回</button></div>
+      `;
+    }
+    return `
+      <div class="fieldset">
+        <label><i class="fa-solid fa-crosshairs"></i> 欲將重禮送予哪位小主（點選頭像）：</label>
+        ${renderVisualTargetSelector(targetIdx)}
+      </div>
+      <div class="fieldset">
+        <label><i class="fa-solid fa-gift"></i> 擇取饋贈之禮品手牌：</label>
+        <select id="f_item">
+          ${p.hand.map(iid => `<option value="${iid}">${itemOf(iid).name}（${itemOf(iid).desc}）</option>`).join('')}
+        </select>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" onclick="resolveGift()"><i class="fa-solid fa-paper-plane"></i> 派人將厚禮送出</button>
+        <button class="secondary" onclick="cancelAction()">取消</button>
+      </div>
+    `;
+  }
+
+  if(a.id === 'steal'){
+    if(p.eunuchs < 1){
+      return `
+        <p class="muted">宮中無手腳麻利的太監差使，無法潛入盜寶。</p>
+        <div class="row"><button class="secondary" onclick="cancelAction()">返回</button></div>
+      `;
+    }
+    return `
+      <div class="fieldset">
+        <label><i class="fa-solid fa-crosshairs"></i> 欲潛入哪座宮室偷盜佩飾（點選頭像）：</label>
+        ${renderVisualTargetSelector(targetIdx)}
+      </div>
+      <p class="muted">太監將趁夜潛行，竊取對方已穿戴裝備之首飾。</p>
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" onclick="resolveSteal()"><i class="fa-solid fa-mask"></i> 遣太監趁夜潛行行竊</button>
+        <button class="secondary" onclick="cancelAction()">取消</button>
+      </div>
+    `;
+  }
+
+  if(a.id === 'zhangbi'){
+    return `
+      <div class="drama-quote"><span>「吃裡扒外的奴才，留在宮裡也是禍害！給本宮重重打，打到嚥氣為止！」</span></div>
+      <div class="fieldset">
+        <label><i class="fa-solid fa-gavel"></i> 厲行家法 · 擇取處死己宮何位宮人：</label>
+        <select id="f_role">
+          <option value="maid" ${p.maids < 1 ? 'disabled':''}>宮女（現有 ${p.maids} 名${(p.staffTurned.maid||0)>0 ? `·其中 ${p.staffTurned.maid} 人背叛！`:''}）</option>
+          <option value="eunuch" ${p.eunuchs < 1 ? 'disabled':''}>太監（現有 ${p.eunuchs} 名${(p.staffTurned.eunuch||0)>0 ? `·其中 ${p.staffTurned.eunuch} 人背叛！`:''}）</option>
+          <option value="physician" ${p.physicians < 1 ? 'disabled':''}>太醫（現有 ${p.physicians} 名${(p.staffTurned.physician||0)>0 ? `·其中 ${p.staffTurned.physician} 人背叛！`:''}）</option>
+        </select>
+      </div>
+      <p class="muted" style="color:var(--crimson);">處死變節宮人後，將優先除掉內應叛奴，整飭宮闈！</p>
+      <div class="row" style="margin-top:12px;">
+        <button class="gold" style="background:var(--crimson);" onclick="resolveZhangbi()">
+          <i class="fa-solid fa-skull"></i> 傳宮規刑杖 · 當場杖斃！
+        </button>
+        <button class="secondary" onclick="cancelAction()">手下留情，暫罷</button>
+      </div>
+    `;
+  }
+  return '';
+}
+
+function cancelAction(){ G.turnStep='chooseAction'; render(); }
+function val(id){ const el = document.getElementById(id); return el? el.value : null; }
+function checked(id){ const el = document.getElementById(id); return el? !!el.checked : false; }
+
+function consumeItem(p, iid){
+  const idx = p.hand.indexOf(iid);
+  if(idx >= 0) p.hand.splice(idx, 1);
+}
+
+/* ================= 4. 行動結算邏輯 ================= */
+function tryShieldBlock(target, label){
+  if(target.shieldCount > 0){
+    target.shieldCount--;
+    addLog(`【阿膠金鐘護體】${charOf(target.charId).name}體內東阿阿膠靈效化為金光，替其擋下了「${label}」之厄運！`, { type:'drama' });
+    return true;
+  }
+  return false;
+}
+
+function resolvePoison(){
+  const p = currentPlayer();
+  const iid = val('f_item');
+  const targetIdx = G.pendingAction.targetIdx;
+  const role = val('f_exec');
+  const target = G.players[targetIdx];
+  const it = itemOf(iid);
+
+  const roleCount = { maid:p.maids, eunuch:p.eunuchs, physician:p.physicians }[role];
+  const turnedCount = p.staffTurned[role] || 0;
+  if(roleCount < 1){
+    G.lastActionResultText = '小主宮中並無可支使之宮人。';
+    G.turnStep = 'actionResult'; render(); return;
+  }
+
+  if(turnedCount >= roleCount){
+    consumeItem(p, iid);
+    const roleName = { maid:'貼身宮女', eunuch:'首領太監', physician:'隨侍太醫' }[role];
+    const dramaticFail = `【全員背叛·當場反咬】${charOf(p.charId).name}宮中所有${roleName}早已全部被收買策反！指派差役無忠僕可用，叛奴暗中將奇毒「${it.name}」倒入院中花泥，並向六宮曝光了自身變節的罪證！`;
+    addLog(dramaticFail, { type:'drama' });
+    G.lastActionResultText = dramaticFail;
+    G.turnStep = 'actionResult'; render(); return;
+  }
+
+  const baseIntel = effectiveStat(p, 'intel');
+  let dice = Math.max(1, Math.floor(baseIntel / 2));
+  const skillDie = charOf(p.charId).skills.find(s => s.type === 'active-poisondie');
+  let usedSkill = false;
+  if(skillDie && skillAvailable(p, skillDie.key) && checked('f_useskill')){
+    dice += skillDie.amount;
+    usedSkill = true;
+    useSkillCooldown(p, skillDie.key, skillDie.cooldown);
+  }
+
+  const targetSkill = charOf(target.charId).skills.find(s => s.type === 'passive-poisonresist');
+  const isMeizhuangResist = !!targetSkill;
+  if(isMeizhuangResist){
+    dice = Math.max(1, Math.floor(dice / 2));
+  }
+
+  consumeItem(p, iid);
+
+  const need = it.check || [];
+  const rolls = Array.from({ length:dice }, () => rollDie());
+  const success = need.length > 0 ? rolls.some(r => need.includes(r)) : true;
+
+  G.poisonAnim = {
+    stage: 'rolling',
+    _started: false,
+    dice,
+    rolls,
+    need,
+    success,
+    it,
+    targetIdx,
+    usedSkill,
+    isMeizhuangResist,
+    baseIntel
+  };
+  G.turnStep = 'poisonAnim';
+  render();
+}
+
+function renderPoisonAnimView(p){
+  const anim = G.poisonAnim;
+  const target = G.players[anim.targetIdx];
+  const actorChar = charOf(p.charId);
+  const targetChar = charOf(target.charId);
+  const it = anim.it;
+  const isSettled = (anim.stage === 'settled' || anim.stage === 'result');
+
+  let html = `
+    <div style="background:#fffcf2; border:1px solid var(--gold); padding:10px 14px; border-radius:3px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-around; align-items:center;">
+        <div style="text-align:center;">
+          <img src="${actorChar.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/70x70/7a1f2b/f4e5bf?text=${encodeURIComponent(actorChar.name)}'">
+          <div style="font-weight:bold; font-size:.85rem; color:var(--crimson-dark); margin-top:3px;">${actorChar.name}</div>
+          <div style="font-size:.72rem; color:#7a6d59;">智能：${anim.baseIntel} 點</div>
+        </div>
+        <div style="text-align:center; color:var(--crimson); font-size:1.4rem;">
+          <i class="fa-solid fa-skull-crossbones fa-beat"></i>
+          <div style="font-size:.72rem; color:#85621e; font-weight:bold; margin-top:2px;">施放「${it.name}」</div>
+        </div>
+        <div style="text-align:center;">
+          <img src="${targetChar.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/70x70/7a1f2b/f4e5bf?text=${encodeURIComponent(targetChar.name)}'">
+          <div style="font-weight:bold; font-size:.85rem; color:var(--crimson-dark); margin-top:3px;">${targetChar.name}</div>
+          <div style="font-size:.72rem; color:#7a6d59;">${targetChar.title}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fcf8f0; border-left:3px solid var(--crimson); padding:8px 12px; margin-bottom:12px; font-size:.82rem; line-height:1.6; color:#5c4f3e;">
+      <b>【智能檢定算法】</b>：小主智能 ${anim.baseIntel} 點 ÷ 2 = ${Math.floor(anim.baseIntel/2)} 顆玉骰
+      ${anim.usedSkill ? ' + 華妃【仗勢欺人】霸道加 1 顆' : ''}
+      ${anim.isMeizhuangResist ? ' ÷ 惠貴人【太后福澤】減半' : ''}
+      <b style="color:var(--crimson-dark);">（總計擲 ${anim.dice} 顆玉骰）</b>。<br>
+      <b>【考驗通過條件】</b>：玉骰中只要出現【<b style="color:var(--crimson);">${anim.need.length ? anim.need.join(' 或 ') : '無須檢定'}</b>】點，即算下毒得手！
+    </div>
+
+    <p class="muted" style="text-align:center; margin:4px 0;">
+      ${anim.stage === 'rolling' ? '<i class="fa-solid fa-dice fa-spin"></i> 宮人密行投毒中，天命玉骰翻滾考驗…' : (anim.success ? '<b style="color:var(--crimson);"><i class="fa-solid fa-check"></i> 玉骰命中！考驗通過！</b>' : '<b style="color:#786c57;"><i class="fa-solid fa-xmark"></i> 點數未中，功虧一簣！</b>')}
+    </p>
+
+    <div class="dice-multi-wrap">
+      ${anim.rolls.map((val, idx) => {
+        const isMatch = isSettled && anim.need.includes(val);
+        return `
+          <div id="p_die_${idx}" class="dice-box ${isSettled ? 'settled' : ''} ${isMatch ? 'match' : ''}">
+            ${isSettled ? val : '<i class="fa-solid fa-question"></i>'}
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    ${anim.stage === 'result' ? `
+      <div style="text-align:center; margin-top:14px;">
+        ${anim.success ? `
+          <div class="drama-quote" style="background:#fdf2f4; border-color:var(--crimson); color:#7d1b28; font-size:.95rem;">
+            <span><i class="fa-solid fa-skull"></i> 【深宮投毒得手】神不知鬼不覺！玉骰擲出所需點數，暗毒順利混入湯羹，成功加害對手！</span>
+          </div>
+          <div class="row" style="justify-content:center; margin-top:12px;">
+            <button class="gold" onclick="finishPoisonAnim()"><i class="fa-solid fa-check"></i> 奇毒生效 · 結算毒害效力</button>
+          </div>
+        ` : `
+          <div class="drama-quote" style="font-size:.92rem;">
+            <span>【功虧一簣】玉骰均未擲出指定之數，宮人手段欠穩險些驚動守衛，只得匆匆將毒物倒掉掩蓋痕跡，投毒失利！</span>
+          </div>
+          <div class="row" style="justify-content:center; margin-top:12px;">
+            <button class="secondary" onclick="finishPoisonAnim()"><i class="fa-solid fa-arrow-right"></i> 銷聲匿跡 · 結束投毒</button>
+          </div>
+        `}
+      </div>
+    ` : ''}
+  `;
+
+  if(anim.stage === 'rolling' && !anim._started){
+    anim._started = true;
+    runPoisonDiceAnimation();
+  }
+
+  return html;
+}
+
+function runPoisonDiceAnimation(){
+  const anim = G.poisonAnim;
+  const faces = ['1','2','3','4','5','6'];
+  let ticks = 0;
+  const iv = setInterval(() => {
+    ticks++;
+    for(let i=0; i<anim.dice; i++){
+      const el = document.getElementById('p_die_' + i);
+      if(el) el.textContent = faces[rnd(6)];
+    }
+    if(ticks >= 11){
+      clearInterval(iv);
+      anim.stage = 'settled';
+      render();
+      setTimeout(() => {
+        anim.stage = 'result';
+        render();
+      }, 500);
+    }
+  }, 75);
+}
+
+function finishPoisonAnim(){
+  const anim = G.poisonAnim;
+  const p = currentPlayer();
+  const target = G.players[anim.targetIdx];
+  const it = anim.it;
+
+  let resultText = `【深宮投毒】${charOf(p.charId).name}命人對${charOf(target.charId).name}施放「${it.name}」${anim.usedSkill ? '（仗勢欺人霸道加骰）' : ''}，智能考驗擲出：${anim.rolls.join('、')}（需 ${anim.need.join('或')}）— ${anim.success ? '【得手成功】！' : '【功虧一簣】！'}`;
+
+  if(anim.success){
+    applyItemEffect(it, target, p);
+  }
+  addLog(resultText, { type:'drama' });
+  G.lastActionResultText = resultText;
+  G.turnStep = 'actionResult';
+  G.poisonAnim = null;
+  render();
+}
+
+function applyItemEffect(it, target, actor){
+  switch(it.effect){
+    case 'miscarry':
+      if(tryShieldBlock(target, it.name)) break;
+      if(target.pregnancy && G.round > (target.preventMiscarryUntil || 0)){
+        target.pregnancy = null;
+        addLog(`【血染深宮】${charOf(target.charId).name}受「${it.name}」奇毒侵體，龍胎難保，不幸滑胎！`, { type:'drama' });
+      }
+      break;
+    case 'miscarryStack':
+      target.miscarryStackCount = (target.miscarryStackCount || 0) + 1;
+      if(target.miscarryStackCount >= 2 && target.pregnancy && G.round > (target.preventMiscarryUntil || 0)){
+        if(tryShieldBlock(target, it.name)){ target.miscarryStackCount = 0; break; }
+        target.pregnancy = null;
+        addLog(`【舒痕慢毒】${charOf(target.charId).name}日日塗抹舒痕膠，麝毒累積攻心，終致滑胎小產！`, { type:'drama' });
+      }
+      break;
+    case 'pregDebuff':
+      if(it.amount < 0 && tryShieldBlock(target, it.name)) break;
+      target.pregDelta += it.amount;
+      break;
+    case 'cycleReset':
+      if(tryShieldBlock(target, it.name)) break;
+      target.cycleClock = rnd(target.cycleTotal);
+      addLog(`【氣血紊亂】${charOf(target.charId).name}服下共筆秘方，天癸大亂，月經週期全盤重置！`, { type:'drama' });
+      break;
+    case 'sick':
+      if(tryShieldBlock(target, it.name)) break;
+      target.sickUntil = G.round + 1;
+      addLog(`【染疫抱恙】${charOf(target.charId).name}遭時疫茶盞所害，臥病在床无法動彈！`, { type:'drama' });
+      break;
+    case 'statDown':
+      if(tryShieldBlock(target, it.name)) break;
+      target.buffs.push({ stat:it.stat, amount:-it.amount, untilRound:G.round + 2 });
+      break;
+    case 'killNewborn':
+      if(target.princes > 0 || target.princesses > 0){
+        if(tryShieldBlock(target, it.name)) break;
+        if(target.princes > 0) target.princes--; else target.princesses--;
+        addLog(`【木薯粉案】${charOf(target.charId).name}膝下尚在襁褓之皇嗣誤食木薯粉，未及滿月便夭折離世……`, { type:'drama' });
+      }
+      break;
+    case 'buff':
+      target.buffs.push({ stat:it.stat, amount:it.amount, untilRound:G.round + it.duration });
+      break;
+    case 'buffSideEffect':
+      target.buffs.push({ stat:it.stat, amount:it.amount, untilRound:G.round + it.duration });
+      target.pregDelta -= 1;
+      break;
+    case 'preventMiscarry':
+      target.preventMiscarryUntil = G.round + it.duration;
+      break;
+    case 'shield':
+      target.shieldCount = (target.shieldCount || 0) + 1;
+      break;
+    case 'cureOne':
+      { const idx = target.buffs.findIndex(b => b.amount < 0); if(idx >= 0) target.buffs.splice(idx, 1); }
+      break;
+    case 'forceOvulation':
+      { const c = charOf(target.charId).cycle; target.cycleClock = c.m + c.f; }
+      break;
+  }
+}
+
+function resolvePersuade(){
+  const p = currentPlayer();
+  const targetIdx = G.pendingAction.targetIdx;
+  const role = val('f_role');
+  const target = G.players[targetIdx];
+  let intel = effectiveStat(p, 'intel');
+
+  const persuadeSkill = charOf(p.charId).skills.find(s => s.type === 'passive-persuade');
+  if(persuadeSkill) intel += persuadeSkill.amount;
+
+  const dice = Math.max(1, Math.floor(intel / 2));
+  const rolls = Array.from({ length:dice }, () => rollDie());
+  const success = rolls.some(r => r === 5 || r === 6);
+
+  const roleCount = { maid:target.maids, eunuch:target.eunuchs, physician:target.physicians }[role];
+  const turnedCount = target.staffTurned[role] || 0;
+  const roleName = { maid:'宮女', eunuch:'太監', physician:'太醫' }[role];
+  let text = '';
+
+  if(roleCount < 1){
+    text = `策反失敗：${charOf(target.charId).name}宮中目前並無此種宮人可供收買。`;
+  } else if(turnedCount >= roleCount){
+    text = `策反無效：${charOf(target.charId).name}宮中現有的 ${roleCount} 名【${roleName}】已全數被策反變節，無忠心宮人可再收買。`;
+  } else if(success){
+    target.staffTurned[role] = turnedCount + 1;
+    text = `【策反大獲全勝】你施展巧言與重金，成功令${charOf(target.charId).name}宮中的一名【${roleName}】暗中簽下投名狀！（該宮【${roleName}】已變節 ${target.staffTurned[role]} / ${roleCount} 人）若其宮中此類宮人全數叛變，往後指派必生反噬！`;
+    addLog(`${charOf(p.charId).name}暗中於西華門密會他宮眼線，播下了變節的種子……`, { secret:true, revealRound:G.round+1 });
+  } else {
+    text = `策反失利：暗樁接觸失敗，擲骰結果：${rolls.join('、')}（未能擲出 5 或 6），所幸並未打草驚蛇。`;
+  }
+
+  G.lastActionResultText = text;
+  G.turnStep = 'actionResult';
+  render();
+}
+
+function resolveSitong(){
+  const p = currentPlayer();
+  const result = performPregnancyRoll(p);
+  if(result.pregnant){
+    p.pregnancy = { startRound: G.round, fromSitong: true };
+  }
+  addLog(`${charOf(p.charId).name}於夜色闌珊之際掩上宮門，悄然執行了一項秘密行動……`, { secret:true, revealRound:G.round+1 });
+  G.pregAnimResult = result;
+  G.pregAnimTarget = p.idx;
+  G.pregAnimMode = 'sitong';
+  G.phase = 'pregnancyGate';
+  G.pregnancyGateRevealed = true;
+  G.pregAnim = { stage:'die-rolling', _started:false };
+  render();
+}
+
+function resolveDixie(){
+  const p = currentPlayer();
+  const targetIdx = G.pendingAction.targetIdx;
+  const target = G.players[targetIdx];
+
+  const pIntel = effectiveStat(p, 'intel');
+  const tIntel = effectiveStat(target, 'intel');
+
+  const pBaseDice = Math.max(1, Math.floor(pIntel / 2));
+  const tBaseDice = Math.max(1, Math.floor(tIntel / 2));
+
+  const isTrulySitong = !!(target.pregnancy && target.pregnancy.fromSitong);
+
+  const pBonusDice = isTrulySitong ? 2 : 0;
+  const tBonusDice = isTrulySitong ? 0 : 2;
+
+  const pTotalDice = pBaseDice + pBonusDice;
+  const tTotalDice = tBaseDice + tBonusDice;
+
+  const pRolls = Array.from({ length: pTotalDice }, () => rollDie());
+  const tRolls = Array.from({ length: tTotalDice }, () => rollDie());
+
+  const pSum = pRolls.reduce((a, b) => a + b, 0);
+  const tSum = tRolls.reduce((a, b) => a + b, 0);
+
+  G.dixieAnim = {
+    stage: 'rolling',
+    _started: false,
+    targetIdx,
+    isTrulySitong,
+    pIntel,
+    tIntel,
+    pBaseDice,
+    tBaseDice,
+    pBonusDice,
+    tBonusDice,
+    pRolls,
+    tRolls,
+    pSum,
+    tSum
+  };
+  G.turnStep = 'dixieAnim';
+  render();
+}
+
+function renderDixieAnimView(p){
+  const anim = G.dixieAnim;
+  const target = G.players[anim.targetIdx];
+  const pChar = charOf(p.charId);
+  const tChar = charOf(target.charId);
+  const isHuanghouAccuser = (p.charId === 'huanghou');
+  const isSettled = (anim.stage === 'settled' || anim.stage === 'result');
+
+  let html = `
+    <div style="background:#fffcf2; border:1px solid var(--gold); padding:12px 14px; border-radius:3px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div style="text-align:center; flex:1;">
+          <img src="${pChar.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/70x70/7a1f2b/f4e5bf?text=${encodeURIComponent(pChar.name)}'">
+          <div style="font-weight:bold; font-size:.88rem; color:var(--crimson-dark); margin-top:2px;">${pChar.name}（指控方）</div>
+          <div style="font-size:.72rem; color:#7a6d59;">智能：${anim.pIntel} 點 (${anim.pBaseDice} 骰${anim.pBonusDice ? ` <b style="color:var(--crimson);">+${anim.pBonusDice}骰</b>` : ''})</div>
+          <div style="font-size:1.1rem; font-weight:bold; color:var(--crimson); margin-top:4px;">總點數：${isSettled ? anim.pSum : '？'}</div>
+        </div>
+
+        <div style="text-align:center; padding:0 8px;">
+          <div style="color:var(--crimson); font-size:1.6rem;"><i class="fa-solid fa-scale-balanced fa-beat"></i></div>
+          <div style="font-family:'Noto Serif TC',serif; font-weight:bold; font-size:.82rem; color:var(--crimson-dark); margin-top:4px;">景仁宮大審</div>
+          <div class="pill" style="margin-top:4px; font-size:.68rem; background:${anim.isTrulySitong ? '#fce8e6' : '#e6f4ea'}; color:${anim.isTrulySitong ? '#c5221f' : '#137333'};">
+            ${anim.isTrulySitong ? '實為私通胎（指控方+2骰）' : '正統胎/未孕（被指控方+2骰）'}
+          </div>
+          ${isHuanghouAccuser ? '<div class="pill" style="margin-top:3px; font-size:.64rem; background:#fef3e2; color:var(--crimson); border-color:var(--gold);">👑 皇后指控：敗訴免罰</div>' : ''}
+        </div>
+
+        <div style="text-align:center; flex:1;">
+          <img src="${tChar.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/70x70/7a1f2b/f4e5bf?text=${encodeURIComponent(tChar.name)}'">
+          <div style="font-weight:bold; font-size:.88rem; color:var(--crimson-dark); margin-top:2px;">${tChar.name}（受審方）</div>
+          <div style="font-size:.72rem; color:#7a6d59;">智能：${anim.tIntel} 點 (${anim.tBaseDice} 骰${anim.tBonusDice ? ` <b style="color:var(--jade);">+${anim.tBonusDice}骰</b>` : ''})</div>
+          <div style="font-size:1.1rem; font-weight:bold; color:var(--jade); margin-top:4px;">總點數：${isSettled ? anim.tSum : '？'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+      <div style="background:#fffaf0; border:1px solid rgba(122,31,43,.25); border-radius:3px; padding:8px;">
+        <div style="text-align:center; font-size:.78rem; font-weight:bold; color:var(--crimson-dark); margin-bottom:6px;">指控方玉骰 (${anim.pRolls.length} 顆)</div>
+        <div class="dice-multi-wrap" style="margin:4px 0;">
+          ${anim.pRolls.map((v, i) => `
+            <div id="dx_p_die_${i}" class="dice-box ${isSettled ? 'settled' : ''}" style="width:44px; height:44px; font-size:1.35rem;">
+              ${isSettled ? v : '<i class="fa-solid fa-question"></i>'}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="background:#f4fbf7; border:1px solid rgba(59,110,94,.25); border-radius:3px; padding:8px;">
+        <div style="text-align:center; font-size:.78rem; font-weight:bold; color:var(--jade); margin-bottom:6px;">受審方玉骰 (${anim.tRolls.length} 顆)</div>
+        <div class="dice-multi-wrap" style="margin:4px 0;">
+          ${anim.tRolls.map((v, i) => `
+            <div id="dx_t_die_${i}" class="dice-box ${isSettled ? 'settled' : ''}" style="width:44px; height:44px; font-size:1.35rem; border-color:var(--jade); color:var(--jade);">
+              ${isSettled ? v : '<i class="fa-solid fa-question"></i>'}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    ${anim.stage === 'result' ? `
+      <div style="text-align:center; margin-top:10px;">
+        ${anim.pSum > anim.tSum ? `
+          <div class="drama-quote" style="background:#fdf2f4; border-color:var(--crimson); font-size:.92rem;">
+            <span>${anim.isTrulySitong ? `【鐵證如山 · 私通定讞】雙血不融，真相大白！${pChar.name}（${anim.pSum}點）勝過${tChar.name}（${anim.tSum}點）！${tChar.name}私通事發，打入冷宮賜自盡淘汰！` : `【屈打成招 · 冤屈難雪】${pChar.name}以勢壓人（${anim.pSum}點 vs ${anim.tSum}點），${tChar.name}屈打成招，美貌重挫 5 點（若有孕則受驚滑胎）！`}</span>
+          </div>
+        ` : (anim.pSum < anim.tSum ? `
+          <div class="drama-quote" style="background:#fef5f5; border-color:var(--crimson); font-size:.92rem;">
+            <span>${anim.isTrulySitong 
+              ? (isHuanghouAccuser 
+                  ? `【舌燦蓮花 · 皇后免責】${tChar.name}巧言善辯（${anim.tSum}點 vs ${anim.pSum}點）逆轉脫罪！然皇后母儀天下，皇上未予降責，皇后手牌不失且無須禁足！` 
+                  : `【舌燦蓮花 · 反咬脫罪】${tChar.name}巧言善辯（${anim.tSum}點 vs ${anim.pSum}點）絕地翻盤！${pChar.name}指控失利，罰沒全部手牌並禁足 2 回合！`)
+              : (isHuanghouAccuser
+                  ? `【水清如鏡 · 中宮無咎】${tChar.name}獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）洗刷冤屈！然皇后統攝六宮查察龍嗣乃出於公心，皇上好言撫慰，皇后免於杖斃且毫髮無損！`
+                  : `【誣陷龍裔 · 當場杖斃】水清如鏡！${pChar.name}誣陷天子龍胎（${anim.pSum}點 vs ${anim.tSum}點），皇上龍顏震怒，${pChar.name}當場杖斃淘汰！`)}</span>
+          </div>
+        ` : `
+          <div class="drama-quote" style="font-size:.92rem;">
+            <span>【水波微瀾 · 平手收場】雙方點數皆為 ${anim.pSum} 點，水無異狀，各執一詞，皇上拂袖離去，相安無事！</span>
+          </div>
+        `)}
+        <div class="row" style="justify-content:center; margin-top:12px;">
+          <button class="gold" onclick="finishDixieAnim()"><i class="fa-solid fa-check"></i> 領旨聽判 · 宣示大審結果</button>
+        </div>
+      </div>
+    ` : `
+      <p class="muted" style="text-align:center;"><i class="fa-solid fa-dice fa-spin"></i> 景仁宮正殿對質中，天命玉骰翻滾定奪皇室血脈…</p>
+    `}
+  `;
+
+  if(anim.stage === 'rolling' && !anim._started){
+    anim._started = true;
+    runDixieDuelAnimation();
+  }
+
+  return html;
+}
+
+function runDixieDuelAnimation(){
+  const anim = G.dixieAnim;
+  const faces = ['1','2','3','4','5','6'];
+  let ticks = 0;
+  const iv = setInterval(() => {
+    ticks++;
+    for(let i=0; i<anim.pRolls.length; i++){
+      const el = document.getElementById('dx_p_die_' + i);
+      if(el) el.textContent = faces[rnd(6)];
+    }
+    for(let i=0; i<anim.tRolls.length; i++){
+      const el = document.getElementById('dx_t_die_' + i);
+      if(el) el.textContent = faces[rnd(6)];
+    }
+    if(ticks >= 12){
+      clearInterval(iv);
+      anim.stage = 'settled';
+      render();
+      setTimeout(() => {
+        anim.stage = 'result';
+        render();
+      }, 450);
+    }
+  }, 75);
+}
+
+function finishDixieAnim(){
+  const anim = G.dixieAnim;
+  const p = currentPlayer();
+  const target = G.players[anim.targetIdx];
+  const pChar = charOf(p.charId);
+  const tChar = charOf(target.charId);
+  const isHuanghouAccuser = (p.charId === 'huanghou');
+
+  let resultText = '';
+
+  if(anim.isTrulySitong){
+    if(anim.pSum > anim.tSum){
+      target.alive = false;
+      resultText = `【景仁宮風雲·鐵證如山】${pChar.name}（${anim.pSum}點）大勝${tChar.name}（${anim.tSum}點）！私通血脈確鑿，${tChar.name}被打入冷宮賜自盡，淘汰出局！`;
+    } else if(anim.pSum < anim.tSum){
+      if(isHuanghouAccuser){
+        resultText = `【景仁宮大審·中宮恩赦】${tChar.name}辯才無礙（${anim.tSum}點 vs ${anim.pSum}點）自證清白！然皇后位居中宮母儀天下，皇上感念舊情未加降旨，皇后手牌不失且無須禁足！`;
+      } else {
+        p.hand = [];
+        p.sickUntil = G.round + 2;
+        resultText = `【景仁宮反咬·功虧一簣】${tChar.name}辯才無礙（${anim.tSum}點 vs ${anim.pSum}點）逆轉定局！${pChar.name}誣告失敗，遭罰沒手中全部道具卡，並被禁足 2 回合！`;
+      }
+    } else {
+      resultText = `【景仁宮對質·平手相安】雙方擲骰皆為 ${anim.pSum} 點，爭執不下，各自作罷歸宮。`;
+    }
+  } else {
+    if(anim.pSum < anim.tSum){
+      if(isHuanghouAccuser){
+        resultText = `【景仁宮大審·母儀無咎】${tChar.name}身正獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）！然皇后受太后力保與祖宗家法庇護，皇上好言相勸，皇后免於杖斃且毫髮無損！`;
+      } else {
+        p.alive = false;
+        resultText = `【誣陷天子龍胎·當場杖斃】${tChar.name}身正獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）！${pChar.name}妄議皇家龍嗣大逆不道，當場被杖斃淘汰！`;
+      }
+    } else if(anim.pSum > anim.tSum){
+      target.buffs.push({ stat:'beauty', amount:-5, untilRound:G.round + 3 });
+      if(target.pregnancy){
+        target.pregnancy = null;
+        resultText = `【景仁宮屈打成招】${pChar.name}（${anim.pSum}點）勝過${tChar.name}（${anim.tSum}點）！${tChar.name}含冤受審驚懼交加，美貌 -5 點且不幸滑胎！`;
+      } else {
+        resultText = `【景仁宮屈打成招】${pChar.name}（${anim.pSum}點）勝過${tChar.name}（${anim.tSum}點）！${tChar.name}百口莫辯受審蒙羞，美貌 -5 點！`;
+      }
+    } else {
+      resultText = `【景仁宮大審·平手作罷】雙方皆擲出 ${anim.pSum} 點，天理昭昭水波不興，各自退下。`;
+    }
+  }
+
+  addLog(resultText, { type:'drama' });
+  G.lastActionResultText = resultText;
+  G.turnStep = 'actionResult';
+  G.dixieAnim = null;
+
+  if(!p.alive){
+    endPlayerTurn();
+  } else {
+    render();
+  }
+}
+
+function resolveBaping(){
+  const p = currentPlayer();
+  const targetIdx = G.pendingAction.targetIdx;
+  const target = G.players[targetIdx];
+
+  const turnedPhys = p.staffTurned['physician'] || 0;
+  if(turnedPhys >= p.physicians && p.physicians > 0){
+    const failMsg = `【太醫全員欺瞞】小主宮中隨侍太醫已全數被收買變節！太醫回宮後滿口胡言謊報脈象，使您一無所獲，且變節身分當場曝光！`;
+    addLog(failMsg, { type:'drama' });
+    G.lastActionResultText = failMsg;
+    G.turnStep = 'actionResult'; render(); return;
+  }
+
+  if(!p.knownSitong) p.knownSitong = {};
+  p.knownSitong[targetIdx] = !!(target.pregnancy && target.pregnancy.fromSitong);
+
+  const phase = cyclePhase(target);
+  const phaseText = { menses:'氣血虛浮之【月經期】', follicular:'平和蓄力之【濾泡期】', ovulation:'胞宮溫熱最適受孕之【排卵期】' }[phase];
+  let pregText = '脈象平穩，寸關無滑，尚未懷有身孕。';
+
+  if(target.pregnancy){
+    const elapsed = G.round - target.pregnancy.startRound + 1;
+    if(target.pregnancy.fromSitong){
+      pregText = `<b style="color:var(--crimson);">寸關尺三脈滑利如走珠，千真萬確已身懷六甲（第 ${elapsed} 回合）！且此胎氣血微異，恐非承恩龍脈，乃是與外男【私通】暗結之胎！</b>`;
+    } else {
+      pregText = `<b style="color:var(--jade);">三部九候滑疾如流珠，乃得沐皇恩之大喜龍脈（已懷胎第 ${elapsed} 回合）！</b>`;
+    }
+  }
+
+  const text = `【平安脈秘奏】太醫謹慎回奏：${charOf(target.charId).name}目前正處於 ${phaseText}。體內息肉脈象明細：${pregText}`;
+  addLog(`${charOf(p.charId).name}宣召太醫密探${charOf(target.charId).name}之脈象，洞悉了六宮深閨秘辛。`);
+  G.lastActionResultText = text;
+  G.turnStep = 'actionResult';
+  render();
+}
+
+function resolveGift(){
+  const p = currentPlayer();
+  const iid = val('f_item');
+  const targetIdx = G.pendingAction.targetIdx;
+  const target = G.players[targetIdx];
+  const it = itemOf(iid);
+
+  const loyalMaids = p.maids - (p.staffTurned['maid'] || 0);
+  const loyalEunuchs = p.eunuchs - (p.staffTurned['eunuch'] || 0);
+
+  if(loyalMaids <= 0 && loyalEunuchs <= 0 && (p.maids + p.eunuchs > 0)){
+    consumeItem(p, iid);
+    const text = `【叛奴私吞厚禮】小主宮中所有宮女與太監已全數變節！差遣辦差之奴才半道將名貴「${it.name}」私吞截留，送禮以失敗告終！`;
+    addLog(text, { type:'drama' });
+    G.lastActionResultText = text;
+    G.turnStep = 'actionResult'; render(); return;
+  }
+
+  consumeItem(p, iid);
+  target.hand.push(iid);
+  const text = `小主差遣貼心宮人將珍貴之「${it.name}」敬贈予${charOf(target.charId).name}，以結深宮金蘭之好。`;
+  addLog(`【姐妹示好】${charOf(p.charId).name}向${charOf(target.charId).name}敬贈了一匣禮品。`);
+  G.lastActionResultText = text;
+  G.turnStep = 'actionResult';
+  render();
+}
+
+function resolveSteal(){
+  const p = currentPlayer();
+  const targetIdx = G.pendingAction.targetIdx;
+  const target = G.players[targetIdx];
+
+  const turnedEunuchs = p.staffTurned['eunuch'] || 0;
+  if(turnedEunuchs >= p.eunuchs && p.eunuchs > 0){
+    const text = `【太監全員反骨】派遣行竊之太監已全數變節！暗中向${charOf(target.charId).name}宮裡通風報信，偷竊當場失風，叛變身分當眾敗露！`;
+    addLog(text, { type:'drama' });
+    G.lastActionResultText = text;
+    G.turnStep = 'actionResult'; render(); return;
+  }
+
+  if(!target.equipped.length){
+    G.lastActionResultText = `${charOf(target.charId).name}身上並無任何穿戴首飾可供竊取。`;
+  } else {
+    const stolenIid = pick(target.equipped);
+    target.equipped = target.equipped.filter(x => x !== stolenIid);
+    p.hand.push(stolenIid);
+    const it = itemOf(stolenIid);
+    const text = `【暗室盜寶】太監手腳麻利，趁夜悄然順走了${charOf(target.charId).name}身邊的「${it.name}」歸入小主私庫！`;
+    addLog(`【宮闈失竊】${charOf(target.charId).name}宮中晨起清點，發現一件名貴佩飾不翼而飛！`, { type:'drama' });
+    G.lastActionResultText = text;
+  }
+  G.turnStep = 'actionResult';
+  render();
+}
+
+function resolveZhangbi(){
+  const p = currentPlayer();
+  const role = val('f_role');
+  const roleName = { maid:'宮女', eunuch:'太監', physician:'太醫' }[role];
+
+  if({ maid:p.maids, eunuch:p.eunuchs, physician:p.physicians }[role] < 1){
+    G.lastActionResultText = '小主宮中已無此等奴僕可處死。';
+  } else {
+    if(role === 'maid') p.maids--;
+    else if(role === 'eunuch') p.eunuchs--;
+    else p.physicians--;
+
+    const hadTurned = (p.staffTurned[role] || 0) > 0;
+    if(hadTurned){
+      p.staffTurned[role]--;
+    }
+
+    const text = hadTurned 
+      ? `【重刑整飭宮規】刑杖齊下！${charOf(p.charId).name}當著闔宮之面將一名變節之${roleName}活活杖斃！內應伏誅，肅清門戶！（該類宮人尚餘 ${p.staffTurned[role]} 名叛徒）`
+      : `【杖斃示威】刑杖齊下！${charOf(p.charId).name}處死了一名${roleName}以儆效尤。`;
+    addLog(text, { type:'drama' });
+    G.lastActionResultText = text;
+  }
+  G.turnStep = 'actionResult';
+  render();
+}
+
+/* ================= 5. 時事發布與宣告 ================= */
+function renderEvent(){
+  if(!G.currentEvent){
+    let pool = EVENT_CARDS;
+    if(DEBUG_MODE) pool = pool.filter(e => e.id !== 'shiyi');
+    G.currentEvent = pick(pool);
+  }
+  const ev = G.currentEvent;
+  app.innerHTML = `
+    <div class="card">
+      <h2>紫禁城時事變遷 <span class="tag">EVENT</span></h2>
+      <div class="drama-quote"><span>「前朝後宮息息相關，今日風向又吹向了哪一處宮闈……」</span></div>
+      <div class="choice-card" style="cursor:default; border-color:var(--gold);">
+        <h4 style="font-size:1.1rem; color:var(--crimson-dark);"><i class="fa-solid fa-scroll"></i> ${ev.name}</h4>
+        <p style="font-size:.9rem; color:#4a4135; margin-top:4px;">${ev.desc}</p>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button class="gold" onclick="resolveEvent()"><i class="fa-solid fa-bullhorn"></i> 太后宣告 · 套用六宮時局</button>
+      </div>
+    </div>
+    ${renderLogCard()}
+  `;
+}
+
+function resolveEvent(){
+  const ev = G.currentEvent;
+  const alive = G.players.filter(p => p.alive);
+  let text = `【六宮時事】「${ev.name}」— ${ev.desc}`;
+
+  switch(ev.id){
+    case 'toufeng': {
+      const t = pick(alive);
+      if(tryShieldBlock(t, ev.name)){ text += `（${charOf(t.charId).name}以東阿阿膠消弭了病痛）`; }
+      else { t.sickUntil = G.round + 1; text += ` 受波及抱恙者：${charOf(t.charId).name}`; }
+      break;
+    }
+    case 'shiyi': {
+      G.globalFavorPauseUntil = G.round + 3;
+      text += `（紫禁城封宮防禦，侍寢全面暫停 3 回合！）`;
+      break;
+    }
+    case 'yasang': {
+      const t = pick(alive);
+      if(tryShieldBlock(t, ev.name)){ text += `（${charOf(t.charId).name}阿膠護身未受啞嗓之害）`; }
+      else { t.buffs.push({ stat:'talent', amount:-3, untilRound:G.round + 2 }); text += ` 嗓音受損者：${charOf(t.charId).name}`; }
+      break;
+    }
+    case 'songpi': {
+      const t = pick(alive);
+      if(tryShieldBlock(t, ev.name)){ text += `（${charOf(t.charId).name}以御賜阿膠葆光煥采免受容顏折損）`; }
+      else { t.buffs.push({ stat:'beauty', amount:-3, untilRound:G.round + 2 }); text += ` 容顏鬆弛者：${charOf(t.charId).name}`; }
+      break;
+    }
+    case 'jingong': {
+      G.extraDrawNextRound = true;
+      text += `（下回合所有小主額外加抽 1 張道具卡）`;
+      break;
+    }
+    case 'gongnv': {
+      const t = pick(alive);
+      if(t.maids < 4){ t.maids++; text += ` 獲賜宮女者：${charOf(t.charId).name}`; }
+      else { text += ` （${charOf(t.charId).name}宮女已滿編 4 人，無須增補）`; }
+      break;
+    }
+    case 'taijian': {
+      const t = pick(alive);
+      if(t.eunuchs < 2){ t.eunuchs++; text += ` 獲賜太監者：${charOf(t.charId).name}`; }
+      else { text += ` （${charOf(t.charId).name}太監已滿編 2 人，無須增補）`; }
+      break;
+    }
+    case 'gewu': {
+      let best = null;
+      alive.forEach(p => {
+        const s = effectiveStat(p, 'talent');
+        if(!best || s > best.s) best = { p, s };
+      });
+      text += ` 歌舞奪魁者：${charOf(best.p.charId).name}（技壓群芳，今夕欽定直接侍寢！）`;
+      G.forcedServer = best.p.idx;
+      break;
+    }
+    case 'daqing': {
+      let best = null;
+      alive.forEach(p => {
+        const s = effectiveStat(p, 'beauty');
+        if(!best || s > best.s) best = { p, s };
+      });
+      for(let i=0; i<3; i++){
+        let pool = ITEM_POOL.filter(x => x.cat !== 'special');
+        if(DEBUG_MODE) pool = pool.filter(x => x.id !== 'shiyibeizu');
+        best.p.hand.push(pick(pool).id);
+      }
+      text += ` 國色天香榜首：${charOf(best.p.charId).name}（獲賜內務府珍寶三匣）`;
+      break;
+    }
+  }
+  addLog(text, { type:'drama' });
+  G.currentEvent = null;
+  G.phase = 'favor';
+  render();
+}
+
+/* ================= 6. 翻綠頭牌 · 侍寢爭寵結算 ================= */
+function renderFavor(){
+  const alive = G.players.filter(p => p.alive);
+
+  if(!DEBUG_MODE && G.round <= (G.globalFavorPauseUntil || 0)){
+    app.innerHTML = `
+      <div class="card">
+        <h2>敬事房翻牌 · 暫歇侍寢 <span class="tag">FAVOR</span></h2>
+        <div class="drama-quote"><span>「疫厲橫行，龍體欠安，太后降旨暫免六宮進御三回……」</span></div>
+        <p class="muted">因時疫橫行，今宵翻牌撤案，無人承寵。</p>
+        <div class="row" style="margin-top:12px;">
+          <button class="gold" onclick="finishRound()"><i class="fa-solid fa-moon"></i> 今夕夜深 · 結算回合</button>
+        </div>
+      </div>
+      ${renderLogCard()}
+    `;
+    return;
+  }
+
+  if(!G.favorScoredDone){
+    let forcedIdx = G.forcedServer;
+    G.forcedServer = null;
+
+    let eligible = alive.filter(p => {
+      const ph = cyclePhase(p);
+      const preg = !!p.pregnancy;
+      const sick = G.round <= p.sickUntil;
+      return ph !== 'menses' && !preg && !sick;
+    });
+
+    G.favorForced = (forcedIdx !== undefined && forcedIdx !== null && alive.find(p => p.idx === forcedIdx)) ? forcedIdx : null;
+    G.favorScored = null;
+    G.favorFenghuoCandidate = null;
+
+    if(G.favorForced === null && eligible.length > 0){
+      const designated = pick(alive);
+      const scored = eligible.map(p => {
+        let score = effectiveStat(p, 'beauty') + effectiveStat(p, 'talent');
+        const favSkill = charOf(p.charId).skills.find(s => s.type === 'passive-favor');
+        if(favSkill) score += favSkill.amount;
+        if(p.idx === designated.idx) score += 10;
+        return { idx:p.idx, score };
+      });
+      scored.sort((a,b) => b.score - a.score);
+      G.favorScored = scored;
+      G.favorDesignated = designated.idx;
+      G.favorDoubleFavor = (G.doubleFavorRound === G.round);
+
+      if(scored.length > 1){
+        const secondIdx = scored[1].idx;
+        const secondPlayer = G.players[secondIdx];
+        const fenghuo = charOf(secondPlayer.charId).skills.find(s => s.type === 'active-forceserve');
+        if(fenghuo && skillAvailable(secondPlayer, fenghuo.key)){
+          G.favorFenghuoCandidate = secondIdx;
+        }
+      }
+    }
+    G.favorScoredDone = true;
+  }
+
+  if(G.favorFenghuoCandidate !== null && G.favorFenghuoDecision === undefined){
+    const fenghuoPlayer = G.players[G.favorFenghuoCandidate];
+    if(fenghuoPlayer.isAi){
+      decideFenghuo(true);
+      return;
+    }
+    renderFenghuoPrompt();
+    return;
+  }
+
+  if(!G.favorComputed){
+    let winnerIdx = null, winner2Idx = null;
+    if(G.favorForced !== null){
+      winnerIdx = G.favorForced;
+    } else if(G.favorScored){
+      if(G.favorFenghuoDecision === true){
+        winnerIdx = G.favorFenghuoCandidate;
+      } else {
+        winnerIdx = G.favorScored[0].idx;
+        if(G.favorDoubleFavor && G.favorScored.length > 1){
+          winner2Idx = G.favorScored[1].idx;
+        }
+      }
+    }
+    G.favorComputed = true;
+    G.favorWinner = winnerIdx;
+    G.favorWinner2 = winner2Idx;
+  }
+
+  const winner = G.favorWinner !== null ? G.players[G.favorWinner] : null;
+  const winner2 = (G.favorWinner2 !== null && G.favorWinner2 !== undefined) ? G.players[G.favorWinner2] : null;
+  const names = [winner, winner2].filter(Boolean).map(w => charOf(w.charId).name).join(' 與 ');
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>敬事房呈綠頭牌 · 侍寢爭寵 <span class="tag">FAVOR</span></h2>
+      ${G.favorScored ? `
+        <div style="background:#fffcf2; border:1px solid var(--gold); padding:8px 12px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
+          <img src="${charOf(G.players[G.favorDesignated].charId).avatar}" class="char-avatar sm" onerror="this.src='https://placehold.co/60x60/7a1f2b/f4e5bf?text=牌'">
+          <div>皇上今日初翻綠頭牌：<b>${charOf(G.players[G.favorDesignated].charId).name}</b>（享 +10 侍寢點數加成）</div>
+        </div>
+        <div class="itemlist">
+          ${G.favorScored.map(s => {
+            const pl = G.players[s.idx];
+            const ch = charOf(pl.charId);
+            return `
+              <div class="itemrow">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <img src="${ch.avatar}" class="char-avatar sm" onerror="this.src='https://placehold.co/50x50/7a1f2b/f4e5bf?text=${encodeURIComponent(ch.name)}'">
+                  <span class="nm">${ch.name}</span>
+                </span>
+                <span class="ds" style="font-weight:bold; color:var(--crimson-dark); font-size:.9rem;">爭寵點數：${s.score} 點</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+      ${winner ? `
+        <div class="drama-quote" style="font-size:.95rem;">
+          <span>鳳鸞春恩車響鈴鳴動，駛向御前！今夕蒙沐聖恩者：<b style="color:var(--crimson);">${names}</b>！</span>
+        </div>
+      ` : `
+        <p class="muted">（六宮主位今夕皆因身懷六甲、癸水月經或臥病，無人合乎進御之規，今夜空懸）</p>
+      `}
+      <div class="row" style="margin-top:14px;">
+        <button class="gold" onclick="announceFavorWinner()"><i class="fa-solid fa-scroll"></i> 敬事房宣旨承恩 · 移入寢殿</button>
+      </div>
+    </div>
+    ${renderLogCard()}
+  `;
+}
+
+function renderFenghuoPrompt(){
+  const p = G.players[G.favorFenghuoCandidate];
+  const c = charOf(p.charId);
+  const skill = c.skills.find(s => s.type === 'active-forceserve');
+  app.innerHTML = `
+    <div class="card">
+      <h2>翊坤宮霸道截車 · 烽火連天 <span class="tag">SPECIAL</span></h2>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+        <img src="${c.avatar}" class="char-avatar lg" onerror="this.src='https://placehold.co/100x100/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+        <div>
+          <div class="drama-quote" style="margin:0 0 6px;"><span>${c.quote}</span></div>
+          <div class="muted">華妃娘娘爭寵綜合點數位居第二！是否依仗年將軍赫赫威名，發動專屬特技【${skill.name}】？</div>
+        </div>
+      </div>
+      <div class="choice-card" style="border-color:var(--crimson); background:#fff9f0;">
+        <h4 style="color:var(--crimson-dark);">${skill.name}</h4>
+        <p>${skill.desc}</p>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button class="gold" style="background:var(--crimson);" onclick="decideFenghuo(true)">
+          <i class="fa-solid fa-fire"></i> 盛氣凌人！無視點數強制登車侍寢！
+        </button>
+        <button class="secondary" onclick="decideFenghuo(false)">按兵不動，暫隱鋒芒</button>
+      </div>
+    </div>
+    ${renderLogCard()}
+  `;
+}
+
+function decideFenghuo(useIt){
+  G.favorFenghuoDecision = useIt;
+  if(useIt){
+    const p = G.players[G.favorFenghuoCandidate];
+    const c = charOf(p.charId);
+    const skill = c.skills.find(s => s.type === 'active-forceserve');
+    useSkillCooldown(p, skill.key, skill.cooldown);
+    addLog(`【烽火連天】華妃年世蘭鳳眸含威，霸道截下鳳鸞春恩車，無視點數強行登車侍寢！`, { type:'drama' });
+  }
+  render();
+}
+
+function announceFavorWinner(){
+  const winners = [G.favorWinner, G.favorWinner2].filter(w => w !== null && w !== undefined);
+  if(!winners.length){
+    addLog(`敬事房回奏：今宵無人侍寢，御前熄燈。`);
+  } else {
+    addLog(`【鳳鸞春恩】本回合侍寢者：${winners.map(idx => charOf(G.players[idx].charId).name).join('、')}。`, { type:'drama' });
+  }
+
+  G.favorScoredDone = false;
+  G.favorComputed = false;
+  G.favorScored = null;
+  G.favorForced = null;
+  G.favorFenghuoCandidate = null;
+  G.favorFenghuoDecision = undefined;
+  G.favorDoubleFavor = false;
+  G.favorWinner2 = null;
+  G.doubleFavorRound = null;
+
+  G.pregnancyQueue = winners.filter(idx => {
+    const pl = G.players[idx];
+    return pl && pl.alive;
+  });
+  proceedPregnancyQueue();
+}
+
+function proceedPregnancyQueue(){
+  if(G.pregnancyQueue && G.pregnancyQueue.length > 0){
+    const targetIdx = G.pregnancyQueue[0];
+    const target = G.players[targetIdx];
+    if(!target || !target.alive){
+      G.pregnancyQueue.shift();
+      proceedPregnancyQueue();
+      return;
+    }
+
+    const isOvulation = (cyclePhase(target) === 'ovulation') && !target.pregnancy;
+
+    if(target.isAi){
+      if(isOvulation){
+        const result = performPregnancyRoll(target);
+        if(result.pregnant){
+          target.pregnancy = { startRound: G.round, fromSitong: false };
+        }
+      }
+      G.pregnancyQueue.shift();
+      proceedPregnancyQueue();
+      return;
+    }
+
+    G.phase = 'pregnancyGate';
+    G.pregnancyGateTarget = targetIdx;
+    G.pregnancyGateRevealed = false;
+    G.pregAnimMode = 'favor';
+
+    if(isOvulation){
+      const result = performPregnancyRoll(target);
+      if(result.pregnant){
+        target.pregnancy = { startRound: G.round, fromSitong: false };
+      }
+      G.pregAnimResult = result;
+    } else {
+      G.pregAnimResult = null;
+    }
+    render();
+  } else {
+    checkDeliveryOrFinish();
+  }
+}
+
+function renderPregnancyGate(){
+  const targetIdx = G.pregnancyGateTarget !== undefined ? G.pregnancyGateTarget : G.pregAnimTarget;
+  const target = G.players[targetIdx];
+  if(!target || !target.alive){
+    advancePregnancyQueue();
+    return;
+  }
+  const c = charOf(target.charId);
+  const isSitong = (G.pregAnimMode === 'sitong');
+
+  if(!G.pregnancyGateRevealed){
+    app.innerHTML = `
+      <div class="card gate">
+        <p class="muted">侍寢結果為私人訊息，請將裝置交給：</p>
+        <div style="display:flex; justify-content:center; margin:10px 0;">
+          <img src="${c.avatar}" class="char-avatar lg" onerror="this.src='https://placehold.co/110x110/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+        </div>
+        <div class="name">${c.name} · ${c.title}</div>
+        <p class="muted" style="font-size:.8rem;">（天機莫洩，侍寢受孕只許小主一人親閱）</p>
+        <button class="gold" onclick="revealPregnancyGate()"><i class="fa-solid fa-feather-pointed"></i> 掀開簾幕 · 密探喜脈吉凶</button>
+      </div>
+    `;
+    return;
+  }
+
+  const r = G.pregAnimResult;
+  if(!r){
+    app.innerHTML = `
+      <div class="card">
+        <h2>養心殿承恩 · 侍寢私密紀事 <span class="tag">起居注密奏</span></h2>
+        <div style="text-align:center; padding:20px 10px;">
+          <img src="${c.avatar}" class="char-avatar lg" style="margin-bottom:12px;">
+          <div class="drama-quote"><span>「今夜龍恩繾綣，雨露均霑。然小主身在【濾泡期】，受孕時機未至……」</span></div>
+          <p class="muted">
+            小主今夜雖侍寢承恩，但因月經週期未逢【排卵期】，今宵未能結珠受孕。<br>
+            <b style="color:var(--jade);">【防窺保密生效】外人僅知小主侍寢，無從窺探您今夜是否處於排卵期！</b>
+          </p>
+          <div class="row" style="justify-content:center; margin-top:16px;">
+            <button class="gold" onclick="advancePregnancyQueue()"><i class="fa-solid fa-check"></i> 領旨知悉 · 退出寢殿</button>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const anim = G.pregAnim || { stage:'result' };
+  const showDie = anim.stage !== 'die-init';
+  const dieSettled = anim.stage !== 'die-init' && anim.stage !== 'die-rolling';
+  const showCards = anim.stage === 'cards' || anim.stage === 'result';
+  const cardsFlipped = anim.stage === 'result';
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>${isSitong ? '私通幽會 · 喜脈暗結檢定':'排卵承恩 · 皇嗣天命判定'} <span class="tag">密訊</span></h2>
+      <p class="muted" style="text-align:center;">
+        ${anim.stage==='die-rolling' ? '<i class="fa-solid fa-dice fa-spin"></i> 天命玉骰翻滾中…' : (anim.stage==='cards' ? '<i class="fa-solid fa-wand-magic-sparkles"></i> 抽取數字卡中…':'天命歸位 · 判定結算')}
+      </p>
+      
+      <div class="dice-wrap">
+        <div id="diceFace" class="dice-box ${dieSettled ? 'settled':''}">${dieSettled ? r.die : '<i class="fa-solid fa-question"></i>'}</div>
+      </div>
+
+      ${r.cards.length ? `
+        <div class="cards-wrap">
+          ${r.cards.map((v,i) => `
+            <div id="card${i}" class="num-card ${cardsFlipped ? 'flipped':''} ${(cardsFlipped && v===r.die) ? 'match':''}">
+              <div class="face back"><i class="fa-solid fa-dragon"></i></div>
+              <div class="face front">${v}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : (showCards ? '<p class="muted" style="text-align:center;">（受麝毒阻滯，本次無任何數字卡可抽）</p>' : '')}
+
+      ${anim.stage === 'result' ? `
+        <div style="text-align:center; margin-top:14px;">
+          <div style="font-size:.82rem; color:#6b5d4b; margin-bottom:8px;">
+            天命玉骰：<b>${r.die}</b> 點 ｜ 命格卡：<b>${r.cards.length ? r.cards.join('、') : '無'}</b>
+            ${r.pregnant ? '<span style="color:var(--jade); font-weight:bold; margin-left:6px;">✔ 點數命中！</span>' : '<span style="color:var(--crimson); font-weight:bold; margin-left:6px;">✘ 點數未中！</span>'}
+          </div>
+          ${r.pregnant ? `
+            <div class="drama-quote" style="background:#f0faf4; border-color:var(--jade); color:#125e34; font-size:1.05rem;">
+              <span><i class="fa-solid fa-certificate"></i> 恭喜小主！寸關尺滑若游絲！千真萬確已身懷六甲！</span>
+            </div>
+            <p class="muted">（此乃天大機密，最遲須於懷胎第 3 回合向六宮宣告孕事；期間請嚴防紅花與麝香暗害！）</p>
+          ` : `
+            <div class="drama-quote" style="font-size:.95rem;">
+              <span>雨露雖施，奈何天命未允。今宵玉骰（${r.die}點）未中命格卡（${r.cards.join('、')}），未能結珠懷胎。</span>
+            </div>
+          `}
+          <div class="row" style="justify-content:center; margin-top:14px;">
+            <button class="gold" onclick="finishPregnancyGate()"><i class="fa-solid fa-arrow-right"></i> ${isSitong ? '妥帖收卷 · 結束本宮回合並移交裝置' : '謹遵天命 · 妥帖收卷'}</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  if(anim.stage === 'die-rolling' && !anim._started){
+    anim._started = true;
+    runDiceAnimation(r.die);
+  }
+}
+
+function revealPregnancyGate(){
+  G.pregnancyGateRevealed = true;
+  G.pregAnim = { stage:'die-rolling', _started:false };
+  render();
+}
+
+function runDiceAnimation(finalDie){
+  const faces = ['1','2','3','4','5','6'];
+  let ticks = 0;
+  const iv = setInterval(() => {
+    const el = document.getElementById('diceFace');
+    ticks++;
+    if(ticks >= 12){
+      clearInterval(iv);
+      G.pregAnim.stage = 'die-settled';
+      render();
+      setTimeout(() => {
+        G.pregAnim.stage = 'cards';
+        render();
+        startCardFlips();
+      }, 450);
+    } else if(el){
+      el.textContent = faces[rnd(6)];
+    }
+  }, 70);
+}
+
+function startCardFlips(){
+  const r = G.pregAnimResult;
+  r.cards.forEach((v,i) => {
+    setTimeout(() => {
+      const el = document.getElementById('card' + i);
+      if(el){
+        el.classList.add('flipped');
+        if(v === r.die) el.classList.add('match');
+      }
+    }, 300 + i * 400);
+  });
+  const totalWait = 300 + r.cards.length * 400 + 400;
+  setTimeout(() => {
+    G.pregAnim.stage = 'result';
+    render();
+  }, totalWait);
+}
+
+function finishPregnancyGate(){
+  if(G.pregAnimMode === 'sitong'){
+    G.phase = 'playerTurn';
+    endPlayerTurn();
+  } else {
+    advancePregnancyQueue();
+  }
+}
+
+function advancePregnancyQueue(){
+  if(G.pregnancyQueue && G.pregnancyQueue.length > 0){
+    G.pregnancyQueue.shift();
+  }
+  proceedPregnancyQueue();
+}
+
+/* ================= 8. 分娩檢定（五回合足月臨盆 · 阿哥/公主） ================= */
+function checkDeliveryOrFinish(){
+  G.deliveryQueue = G.players.filter(p => p.alive && p.pregnancy && (G.round - p.pregnancy.startRound + 1 >= 5)).map(p => p.idx);
+  proceedDeliveryQueue();
+}
+
+function proceedDeliveryQueue(){
+  if(G.deliveryQueue && G.deliveryQueue.length > 0){
+    const targetIdx = G.deliveryQueue[0];
+    const target = G.players[targetIdx];
+
+    if(target.isAi){
+      let die = rollDie();
+      let isPrince = (die % 2 === 1);
+      if(!isPrince && target.hand.includes('baoshengnan')){
+        consumeItem(target, 'baoshengnan');
+        die = rollDie();
+        isPrince = (die % 2 === 1);
+        addLog(`【逆天改命】${charOf(target.charId).name}服下秘傳「包生男」，分娩重定乾坤！`, { type:'drama' });
+      }
+      if(isPrince) target.princes++; else target.princesses++;
+      target.pregnancy = null;
+      addLog(`【景陽鐘鳴】${charOf(target.charId).name}順利分娩，誕育了一位${isPrince ? '【阿哥】':'【公主】'}！`, { type:'drama' });
+      G.deliveryQueue.shift();
+      proceedDeliveryQueue();
+      return;
+    }
+
+    G.phase = 'deliveryGate';
+    G.deliveryTarget = targetIdx;
+    G.deliveryRevealed = false;
+    G.deliveryResult = null;
+    render();
+  } else {
+    finishRound();
+  }
+}
+
+function renderDeliveryGate(){
+  const target = G.players[G.deliveryTarget];
+  const c = charOf(target.charId);
+
+  if(!G.deliveryRevealed){
+    app.innerHTML = `
+      <div class="card gate">
+        <p class="muted"><i class="fa-solid fa-bell"></i> 景陽鐘鳴！十月懷胎瓜熟蒂落，請將裝置交給即將臨盆之主位：</p>
+        <div style="display:flex; justify-content:center; margin:10px 0;">
+          <img src="${c.avatar}" class="char-avatar lg" onerror="this.src='https://placehold.co/110x110/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+        </div>
+        <div class="name">${c.name} · ${c.title}</div>
+        <div class="drama-quote"><span>「啟稟皇上、太后！產房熱水已備妥，穩婆進殿，小主要生了！」</span></div>
+        <button class="gold" onclick="revealDeliveryGate()"><i class="fa-solid fa-baby"></i> 入產房 · 迎誕皇嗣龍種</button>
+      </div>
+    `;
+    return;
+  }
+
+  const r = G.deliveryResult;
+  const hasBaosheng = target.hand.includes('baoshengnan');
+  const anim = G.delivAnim || { stage:'result' };
+  const dieSettled = anim.stage !== 'die-init' && anim.stage !== 'die-rolling';
+  const cardsFlipped = anim.stage === 'result';
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>六宮產房密奏 · 皇嗣天命降生 <span class="tag">瓜熟蒂落</span></h2>
+      <p class="muted" style="text-align:center;">
+        ${anim.stage==='die-rolling' ? '<i class="fa-solid fa-dice fa-spin"></i> 產婆接生，天命玉骰翻滾中…' : '奇數為阿哥，偶數為公主'}
+      </p>
+
+      <div class="dice-wrap">
+        <div id="delivDiceFace" class="dice-box ${dieSettled ? 'settled':''}">${dieSettled ? r.die : '<i class="fa-solid fa-question"></i>'}</div>
+      </div>
+
+      <div class="cards-wrap">
+        <div id="delivCard" class="num-card ${cardsFlipped ? 'flipped':''} match" style="width:72px; height:100px;">
+          <div class="face back"><i class="fa-solid fa-crown"></i></div>
+          <div class="face front" style="font-size:1.2rem; flex-direction:column; gap:4px;">
+            <div>${r.isPrince ? '👶 阿哥':'👧 公主'}</div>
+            <div style="font-size:.8rem; color:#85621e;">（${r.die} 點）</div>
+          </div>
+        </div>
+      </div>
+
+      ${anim.stage === 'result' ? `
+        <div style="text-align:center; margin-top:14px;">
+          <div class="drama-quote" style="background:#fef7e9; border-color:var(--gold); font-size:1.05rem;">
+            <span>${r.isPrince ? '【天降祥瑞·龍嗣誕生】母憑子貴！恭喜小主誕下一位健康睿智之【阿哥】！':'【金枝玉葉·明珠入掌】鐘靈毓秀！恭喜小主誕下一位溫婉可人之【公主】！'}</span>
+          </div>
+
+          ${(!r.isPrince && hasBaosheng) ? `
+            <div style="margin:12px 0; background:#f0f9f5; border:1px solid var(--jade); padding:10px; border-radius:3px;">
+              <p class="muted" style="color:#115732; margin:0 0 6px;">袖中藏有西域秘藥「包生男」，是否立即服下逆天改命重新擲骰？</p>
+              <button class="gold" onclick="rerollWithBaosheng()"><i class="fa-solid fa-pills"></i> 服下「包生男」· 重骰重定乾坤！</button>
+            </div>
+          ` : ''}
+
+          <div class="row" style="justify-content:center; margin-top:14px;">
+            <button class="gold" onclick="finishOneDelivery()"><i class="fa-solid fa-check"></i> 抱入襁褓 · 載入皇家玉牒</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  if(anim.stage === 'die-rolling' && !anim._started){
+    anim._started = true;
+    runDeliveryDiceAnimation(r.die);
+  }
+}
+
+function revealDeliveryGate(){
+  const die = rollDie();
+  const isPrince = (die % 2 === 1);
+  G.deliveryResult = { die, isPrince };
+  G.deliveryRevealed = true;
+  G.delivAnim = { stage:'die-rolling', _started:false };
+  render();
+}
+
+function runDeliveryDiceAnimation(finalDie){
+  const faces = ['1','2','3','4','5','6'];
+  let ticks = 0;
+  const iv = setInterval(() => {
+    const el = document.getElementById('delivDiceFace');
+    ticks++;
+    if(ticks >= 12){
+      clearInterval(iv);
+      G.delivAnim.stage = 'die-settled';
+      render();
+      setTimeout(() => {
+        const cEl = document.getElementById('delivCard');
+        if(cEl) cEl.classList.add('flipped');
+        setTimeout(() => {
+          G.delivAnim.stage = 'result';
+          render();
+        }, 400);
+      }, 400);
+    } else if(el){
+      el.textContent = faces[rnd(6)];
+    }
+  }, 70);
+}
+
+function rerollWithBaosheng(){
+  const target = G.players[G.deliveryTarget];
+  consumeItem(target, 'baoshengnan');
+  addLog(`【逆天改命】${charOf(target.charId).name}服下秘傳「包生男」，穩婆回春，分娩重骰！`, { type:'drama' });
+  revealDeliveryGate();
+}
+
+function finishOneDelivery(){
+  const target = G.players[G.deliveryTarget];
+  const r = G.deliveryResult;
+  if(r.isPrince) target.princes++; else target.princesses++;
+  target.pregnancy = null;
+  addLog(`【景陽鐘鳴】${charOf(target.charId).name}順利分娩，誕育了一位${r.isPrince ? '【阿哥】':'【公主】'}！`, { type:'drama' });
+
+  G.deliveryQueue.shift();
+  proceedDeliveryQueue();
+}
+
+/* ================= 9. 回合結算與終局奪嫡檢定 ================= */
+function finishRound(){
+  const alivePlayers = G.players.filter(p => p.alive);
+  let winner = null;
+
+  alivePlayers.forEach(p => {
+    if(p.princes >= 2) winner = p;
+    if(p.princesses >= 2 && p.princes >= 1) winner = p;
+  });
+
+  if(!winner && alivePlayers.length === 1 && G.players.length > 1){
+    winner = alivePlayers[0];
+  }
+
+  if(winner){
+    G.winner = winner;
+    G.phase = 'gameOver';
+    render();
+    return;
+  }
+
+  G.players.forEach(p => {
+    if(p.alive){
+      p.cycleClock = (p.cycleClock + 1) % p.cycleTotal;
+      p.buffs = p.buffs.filter(b => G.round < b.untilRound);
+
+      if(p.equippedExp){
+        for(const [iid, expRound] of Object.entries(p.equippedExp)){
+          if(G.round >= expRound){
+            p.equipped = p.equipped.filter(id => id !== iid);
+            delete p.equippedExp[iid];
+            addLog(`【佩飾藥效散盡】${charOf(p.charId).name}佩戴的「${itemOf(iid).name}」效力告罄，已卸下焚毀。`);
+          }
+        }
+      }
+    }
+  });
+
+  G.round++;
+  startRound();
+  render();
+}
+
+/* ================= 10. 大結局畫面 ================= */
+function renderGameOver(){
+  const w = G.winner;
+  const c = charOf(w.charId);
+  app.innerHTML = `
+    <div class="card" style="text-align:center; padding:36px 20px;">
+      <div style="font-size:2.8rem; color:var(--gold); margin-bottom:6px;"><i class="fa-solid fa-crown"></i></div>
+      <h2 style="justify-content:center; font-size:1.8rem;">母儀天下 · 奪嫡大捷</h2>
+      <div style="display:flex; justify-content:center; margin:16px 0;">
+        <img src="${c.avatar}" class="char-avatar lg" style="width:96px; height:96px;" onerror="this.src='https://placehold.co/120x120/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+      </div>
+      <p style="font-family:'Noto Serif TC',serif; font-size:1.6rem; color:var(--crimson-dark); margin:4px 0 8px;">${c.name} · ${c.title}</p>
+      <div class="drama-quote" style="max-width:520px; margin:10px auto 16px;"><span>${c.quote}</span></div>
+      <p class="muted" style="font-size:1.05rem;">
+        育有阿哥 <b style="color:var(--crimson);">${w.princes}</b> 位 ｜ 公主 <b style="color:var(--jade);">${w.princesses}</b> 位<br>
+        歷經 ${G.round} 回合後宮血雨腥風，終拔頭籌君臨六宮！
+      </p>
+      <div class="row" style="justify-content:center; margin-top:22px;">
+        <button class="gold" onclick="resetGame()"><i class="fa-solid fa-rotate-left"></i> 重入宮闈 · 再啟風雲</button>
+      </div>
+    </div>
+    ${renderLogCard()}
+  `;
+}
+
+function resetGame(){
+  G = null;
+  setupSelection = [];
+  render();
+}
+
+/* ================= 日誌卡片渲染 ================= */
+function renderLogCard(){
+  const visible = G.log.filter(l => !l.secret || G.round > l.revealRound || (G.round === l.revealRound));
+  if(!visible.length) return '';
+  return `
+    <div class="card">
+      <h2>後宮起居起居注記錄 <span class="tag">CHRONICLE</span></h2>
+      <div class="logbox">
+        ${visible.slice().reverse().map(l => `
+          <div class="logline ${l.type==='drama'?'drama':(l.secret?'secret':'')}">
+            <span class="pill" style="font-size:.65rem; background:rgba(0,0,0,.08);">第 ${l.round} 回合</span> ${l.text}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ================= 圖檔自訂管理器 ================= */
+function showPalaceModal(title, bodyHtml){
+  const mc = document.getElementById('modal_container');
+  mc.innerHTML = `
+    <div class="palace-modal-overlay" onclick="if(event.target===this) closePalaceModal()">
+      <div class="palace-modal">
+        <h2 style="font-family:'Noto Serif TC',serif; color:var(--crimson-dark); margin:0 0 12px; display:flex; justify-content:space-between; align-items:center;">
+          <span>${title}</span>
+          <button class="secondary" style="padding:2px 8px; font-size:.8rem;" onclick="closePalaceModal()"><i class="fa-solid fa-xmark"></i></button>
+        </h2>
+        <div>${bodyHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+function closePalaceModal(){
+  const mc = document.getElementById('modal_container');
+  mc.innerHTML = '';
+}
+
+function openAssetManagerModal(){
+  const html = `
+    <div class="muted" style="margin-bottom:12px;">
+      您保有十年前的實體卡牌原畫嗎？在此可直接點選小主，上傳替換為您的原版立繪圖檔（圖片僅暫存於您本地瀏覽器記憶體中）：
+    </div>
+    <div class="itemlist">
+      ${CHARACTERS.map(c => `
+        <div class="itemrow">
+          <span style="display:flex; align-items:center; gap:10px;">
+            <img src="${c.avatar}" id="preview_${c.id}" class="char-avatar sm" onerror="this.src='https://placehold.co/60x60/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+            <b>${c.name}</b>
+          </span>
+          <label class="top-btn" style="cursor:pointer; margin:0;">
+            <i class="fa-solid fa-upload"></i> 上傳圖片
+            <input type="file" accept="image/*" style="display:none;" onchange="handleAssetUpload('${c.id}', this)">
+          </label>
+        </div>
+      `).join('')}
+    </div>
+    <div class="row" style="margin-top:14px; justify-content:flex-end;">
+      <button class="gold" onclick="closePalaceModal()">完成並返回宮中</button>
+    </div>
+  `;
+  showPalaceModal('內務府造辦處 · 原版圖檔管理器', html);
+}
+
+function openSimulationModal(){
+  const results = runMonteCarloSimulation(200);
+  renderSimulationModal(results);
+}
+
+function runMonteCarloSimulation(totalGames = 200){
+  const stats = {};
+  CHARACTERS.forEach(c => {
+    stats[c.id] = { id:c.id, name:c.name, wins:0, princesTotal:0, princessesTotal:0, totalFavor:0, pregTotal:0, poisonedOthers:0 };
+  });
+
+  let totalRoundsSum = 0;
+  const gameLog = [];
+
+  for(let g = 1; g <= totalGames; g++){
+    const outcome = simulateSingleHeadlessGame();
+    totalRoundsSum += outcome.round;
+    if(outcome.winnerId && stats[outcome.winnerId]){
+      stats[outcome.winnerId].wins++;
+    }
+    outcome.playerStats.forEach(ps => {
+      if(stats[ps.charId]){
+        stats[ps.charId].princesTotal += ps.princes;
+        stats[ps.charId].princessesTotal += ps.princesses;
+        stats[ps.charId].totalFavor += ps.favors;
+        stats[ps.charId].pregTotal += ps.pregs;
+      }
+    });
+    gameLog.push({ game:g, winnerId:outcome.winnerId, round:outcome.round, reason:outcome.reason });
+  }
+
+  const sorted = Object.values(stats).sort((a,b) => b.wins - a.wins);
+  return {
+    totalGames,
+    avgRounds: (totalRoundsSum / totalGames).toFixed(1),
+    ranking: sorted,
+    gameLog
+  };
+}
+
+function simulateSingleHeadlessGame(){
+  const players = CHARACTERS.map((c, idx) => {
+    const totalCycle = c.cycle.m + c.cycle.f + c.cycle.o;
+    const startCount = Math.max(1, Math.floor(c.resource / 2));
+    const hand = [];
+    for(let i=0; i<startCount; i++){
+      hand.push(pick(ITEM_POOL.filter(x => x.cat !== 'special')).id);
+    }
+    return {
+      idx, charId: c.id,
+      maids:2, eunuchs:1, physicians:1,
+      staffTurned:{ maid:0, eunuch:0, physician:0 },
+      hand, equipped:[], equippedExp:{}, buffs:[],
+      pregDelta:0, preventMiscarryUntil:0, shieldCount:0, sickUntil:0,
+      cycleTotal: totalCycle, cycleClock: rnd(totalCycle),
+      pregnancy: null, skillCooldownUntil:{},
+      skillUsesLeft: Object.fromEntries(c.skills.filter(s=>s.usesLeft!==undefined).map(s=>[s.key,s.usesLeft])),
+      knownSitong:{},
+      alive: true, princes:0, princesses:0, miscarryStackCount:0,
+      favors:0, pregs:0
+    };
+  });
+
+  let round = 1;
+  let winnerId = null;
+  let reason = '';
+
+  while(round <= 35 && !winnerId){
+    for(const p of players){
+      if(!p.alive) continue;
+      const c = charOf(p.charId);
+      const isSick = round <= p.sickUntil;
+
+      p.hand.push(pick(ITEM_POOL.filter(x => x.cat !== 'special')).id);
+
+      const equips = p.hand.filter(id => itemOf(id).cat === 'equip' || itemOf(id).equippable);
+      if(equips.length){
+        const eqId = equips[0];
+        p.hand.splice(p.hand.indexOf(eqId), 1);
+        p.equipped.push(eqId);
+      }
+
+      if(p.charId === 'anda_ying' && (p.skillUsesLeft['chenshui']||0) > 0 && p.hand.length){
+        p.hand.splice(0, 1, 'shexiang');
+        p.skillUsesLeft['chenshui']--;
+      }
+
+      if(p.charId === 'wanpin' && round >= (p.skillCooldownUntil['dieren']||0)){
+        p.buffs.push({ stat:'beauty', amount:5, untilRound:round+1 });
+        p.buffs.push({ stat:'talent', amount:5, untilRound:round+1 });
+        p.skillCooldownUntil['dieren'] = round + 2;
+      }
+      if(p.charId === 'huanghou' && round >= (p.skillCooldownUntil['chunyuan']||0)){
+        ['beauty','intel','talent'].forEach(stat => p.buffs.push({ stat, amount:5, untilRound:round+1 }));
+        p.skillCooldownUntil['chunyuan'] = round + 3;
+      }
+
+      if(isSick) continue;
+
+      const others = players.filter(o => o.alive && o.idx !== p.idx);
+      if(others.length){
+        const confirmedSitong = others.find(o => o.pregnancy && p.knownSitong[o.idx]);
+        const target = confirmedSitong || others.find(o => o.pregnancy) || others[rnd(others.length)];
+        const phase = (p.cycleClock < c.cycle.m) ? 'menses' : (p.cycleClock < c.cycle.m + c.cycle.f ? 'follicular' : 'ovulation');
+        const poisons = p.hand.filter(id => itemOf(id).cat === 'poison');
+
+        // 模擬 AI 滴血認親絕殺或皇后無風險指控
+        if((confirmedSitong && rnd(100) < 65) || (p.charId === 'huanghou' && target && target.pregnancy && rnd(100) < 40)){
+          const isSitongTarget = !!(target.pregnancy && target.pregnancy.fromSitong);
+          let pDice = Math.max(1, Math.floor(effectiveStat(p, 'intel') / 2)) + (isSitongTarget ? 2 : 0);
+          let tDice = Math.max(1, Math.floor(effectiveStat(target, 'intel') / 2)) + (isSitongTarget ? 0 : 2);
+          let pSum = Array.from({length:pDice}, ()=>rollDie()).reduce((a,b)=>a+b,0);
+          let tSum = Array.from({length:tDice}, ()=>rollDie()).reduce((a,b)=>a+b,0);
+          if(pSum > tSum){
+            if(isSitongTarget){
+              target.alive = false;
+            } else {
+              target.pregnancy = null;
+            }
+          } else if(pSum < tSum && p.charId !== 'huanghou'){
+            if(!isSitongTarget){
+              p.alive = false;
+            }
+          }
+        }
+        else if(p.charId === 'huiguiren' && phase === 'ovulation' && (p.skillUsesLeft['tianxian']||0) > 0){
+          p.skillUsesLeft['tianxian']--;
+          const die = rollDie();
+          const cards = [drawNumberCard(), drawNumberCard()];
+          if(cards.includes(die)){ p.pregnancy = { startRound:round, fromSitong:true }; p.pregs++; }
+        } else if(phase === 'ovulation' && !p.pregnancy && rnd(100) < 40){
+          const die = rollDie();
+          const cards = [drawNumberCard(), drawNumberCard()];
+          if(cards.includes(die)){ p.pregnancy = { startRound:round, fromSitong:true }; p.pregs++; }
+        } else if(poisons.length && target){
+          const pIid = poisons[0];
+          const it = itemOf(pIid);
+          p.hand.splice(p.hand.indexOf(pIid), 1);
+          let dice = Math.max(1, Math.floor(effectiveStat(p, 'intel') / 2));
+          if(charOf(target.charId).skills.some(s => s.type === 'passive-poisonresist')) dice = Math.max(1, Math.floor(dice/2));
+          const rolls = Array.from({length:dice}, ()=>rollDie());
+          if(!it.check || rolls.some(r => it.check.includes(r))){
+            if(target.pregnancy && round > (target.preventMiscarryUntil||0) && target.shieldCount <= 0){
+              if(it.effect === 'miscarry') target.pregnancy = null;
+            }
+          }
+        } else if(target.pregnancy && p.physicians > 0){
+          p.knownSitong[target.idx] = !!(target.pregnancy && target.pregnancy.fromSitong);
+        }
+      }
+    }
+
+    const alive = players.filter(p => p.alive);
+    const eligible = alive.filter(p => {
+      const c = charOf(p.charId);
+      const ph = (p.cycleClock < c.cycle.m) ? 'menses' : (p.cycleClock < c.cycle.m + c.cycle.f ? 'follicular' : 'ovulation');
+      return ph !== 'menses' && !p.pregnancy && round > p.sickUntil;
+    });
+
+    if(eligible.length){
+      const des = pick(alive);
+      const scored = eligible.map(p => {
+        let sc = effectiveStat(p, 'beauty') + effectiveStat(p, 'talent');
+        if(p.charId === 'anda_ying') sc += 3;
+        if(p.idx === des.idx) sc += 10;
+        return { p, sc };
+      }).sort((a,b) => b.sc - a.sc);
+
+      let winnerP = scored[0].p;
+      if(scored.length > 1 && scored[1].p.charId === 'huafei' && round >= (scored[1].p.skillCooldownUntil['fenghuo']||0)){
+        winnerP = scored[1].p;
+        winnerP.skillCooldownUntil['fenghuo'] = round + 3;
+      }
+
+      winnerP.favors++;
+      const c = charOf(winnerP.charId);
+      const ph = (winnerP.cycleClock < c.cycle.m) ? 'menses' : (winnerP.cycleClock < c.cycle.m + c.cycle.f ? 'follicular' : 'ovulation');
+      if(ph === 'ovulation' && !winnerP.pregnancy){
+        const d = rollDie();
+        const cds = [drawNumberCard(), drawNumberCard()];
+        if(cds.includes(d)){
+          winnerP.pregnancy = { startRound:round, fromSitong:false };
+          winnerP.pregs++;
+        }
+      }
+    }
+
+    for(const p of alive){
+      if(p.pregnancy && (round - p.pregnancy.startRound + 1 >= 5)){
+        let d = rollDie();
+        let isP = (d % 2 === 1);
+        if(!isP && p.hand.includes('baoshengnan')){
+          p.hand.splice(p.hand.indexOf('baoshengnan'), 1);
+          d = rollDie();
+          isP = (d % 2 === 1);
+        }
+        if(isP) p.princes++; else p.princesses++;
+        p.pregnancy = null;
+      }
+    }
+
+    for(const p of alive){
+      if(p.princes >= 2){ winnerId = p.charId; reason = '誕育 2 位阿哥，母憑子貴！'; break; }
+      if(p.princesses >= 2 && p.princes >= 1){ winnerId = p.charId; reason = '誕育 1 阿哥 2 公主，枝繁葉茂！'; break; }
+    }
+
+    players.forEach(p => {
+      p.cycleClock = (p.cycleClock + 1) % p.cycleTotal;
+      p.buffs = p.buffs.filter(b => round < b.untilRound);
+    });
+
+    round++;
+  }
+
+  return {
+    winnerId: winnerId || (players.filter(p=>p.alive).sort((a,b)=> (b.princes*2 + b.princesses) - (a.princes*2 + a.princesses))[0].charId),
+    round: Math.min(round, 35),
+    reason: reason || '回合上限結算子嗣總分勝出',
+    playerStats: players.map(p => ({
+      charId: p.charId, princes: p.princes, princesses: p.princesses,
+      favors: p.favors, pregs: p.pregs
+    }))
+  };
+}
+
+function renderSimulationModal(data){
+  const topWinner = data.ranking[0];
+  const body = `
+    <div style="font-size:.85rem; line-height:1.6;">
+      <div class="drama-quote" style="margin:0 0 12px; font-size:.92rem;">
+        <i class="fa-solid fa-chart-line"></i> <b>【內務府沙盤推演完畢】</b>共推演 <b>${data.totalGames}</b> 場紫禁城死局，平均奪嫡耗時 <b>${data.avgRounds}</b> 回合。<br>
+        勝率奪魁者：<b style="color:var(--crimson); font-size:1.05rem;">${topWinner.name}</b>（獲勝 ${topWinner.wins} 場，勝率 ${((topWinner.wins/data.totalGames)*100).toFixed(1)}%）！
+      </div>
+
+      <div class="itemlist" style="gap:10px;">
+        ${data.ranking.map((r, rank) => {
+          const c = charOf(r.id);
+          const winPct = ((r.wins / data.totalGames) * 100).toFixed(1);
+          return `
+            <div class="itemrow" style="flex-direction:column; align-items:stretch; padding:10px 12px; border-left:4px solid ${rank===0?'var(--gold)':'var(--line)'}; background:#fffdf7;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-family:'Noto Serif TC',serif; font-weight:900; font-size:1.1rem; color:${rank===0?'var(--crimson)':'#7a6d59'};">#${rank+1}</span>
+                  <img src="${c.avatar}" class="char-avatar sm" onerror="this.src='https://placehold.co/50x50/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+                  <b>${r.name}</b> · ${c.title}
+                </span>
+                <span style="font-family:'Noto Serif TC',serif; font-weight:bold; font-size:1.05rem; color:var(--crimson-dark);">
+                  勝率 ${winPct}% <span style="font-size:.78rem; font-weight:normal; color:#6b5f4f;">(${r.wins}/${data.totalGames}局)</span>
+                </span>
+              </div>
+              <div style="background:#e8dfcb; border-radius:3px; height:8px; overflow:hidden; margin-bottom:6px;">
+                <div style="background:linear-gradient(90deg, var(--gold), var(--crimson)); height:100%; width:${winPct}%;"></div>
+              </div>
+              <div style="font-size:.74rem; color:#786a55; display:flex; gap:12px; flex-wrap:wrap;">
+                <span>累積誕下阿哥：<b style="color:var(--crimson);">${r.princesTotal}</b></span>
+                <span>公主：<b style="color:var(--jade);">${r.princessesTotal}</b></span>
+                <span>受孕次數：<b>${r.pregTotal}</b></span>
+                <span>侍寢承恩：<b>${r.totalFavor}</b> 次</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="background:#f9f5ea; border:1px solid var(--gold); padding:10px 12px; border-radius:3px; margin-top:12px; font-size:.8rem; color:#5c4f3d;">
+        <b><i class="fa-solid fa-lightbulb"></i> 策士戰術解構：</b><br>
+        • <b>莞嬪（甄嬛）</b> 擁有美貌 8 + 才藝 7 的基底，配合每 2 回合發動的【蝶舞飛仙】（美才各+5），爭寵數值常態碾壓六宮，加上週期有高達 <b>42.9% 的排卵期</b>，受孕頻率極高。<br>
+        • <b>華妃（年世蘭）</b> 憑藉【烽火連天】在爭寵第二時強制登車，並以【仗勢欺人】多擲骰下毒，極具翻盤爆發力。<br>
+        • <b>皇后（宜修）</b> 雖初始資源豐沛、智能高達 8，但<b>排卵期僅佔 1/6 (16.7%)</b>，極難自力誕育雙阿哥，偏向全場下毒控場型角色。
+      </div>
+
+      <div class="row" style="margin-top:14px; justify-content:space-between;">
+        <button class="gold" onclick="openSimulationModal()"><i class="fa-solid fa-rotate"></i> 重新模擬 200 局</button>
+        <button class="secondary" onclick="closePalaceModal()">關閉視窗</button>
+      </div>
+    </div>
+  `;
+  showPalaceModal('內務府造辦處 · 蒙地卡羅 200 局推演戰報', body);
+}
+
+function handleAssetUpload(charId, input){
+  if(input.files && input.files[0]){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const c = charOf(charId);
+      if(c){
+        c.avatar = e.target.result;
+        const prev = document.getElementById('preview_' + charId);
+        if(prev) prev.src = c.avatar;
+        render();
+      }
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
