@@ -247,7 +247,7 @@ const ITEM_POOL = [
   { id:'huanyixiang', name:'歡宜香', cat:'poison', desc:'專寵賜香暗藏麝毒，使對象下次懷孕少抽 1 張數字卡', effect:'pregDebuff', amount:-1 },
   { id:'manaozhulian', name:'瑪瑙珠鍊', cat:'poison', desc:'浸潤麝香水之串珠，使對象下次懷孕少抽 1 張數字卡', effect:'pregDebuff', amount:-1 },
   { id:'shuhenjiao', name:'舒痕膠', cat:'poison', desc:'桃花白玉膏暗摻麝香，累積下毒 2 次方可滑胎（僅安答應可持有）', effect:'miscarryStack', check:[5,6], onlyHolder:'anda_ying' },
-  { id:'yaolixue', name:'藥理學共筆', cat:'poison', desc:'深宮偏方擾亂氣血，對象經期大亂重抽週期起點', effect:'cycleReset' },
+  { id:'yaolixue', name:'藥理學共筆', cat:'poison', desc:'深宮偏方擾亂氣血，對象經期大亂直接跳入月經期', effect:'cycleReset' },
   { id:'shiyibeizu', name:'時疫杯組', cat:'poison', desc:'沈眉莊染疫之茶盞，使對象患病臥床至下回合結束', effect:'sick' },
   { id:'zhuxi', name:'竹息姑姑的髮簪', cat:'poison', desc:'太后近侍威儀相迫，對象美貌 -3（智能檢定：5,6）', effect:'statDown', stat:'beauty', amount:3, check:[5,6] },
   { id:'huanbi', name:'浣碧的浮光錦', cat:'poison', desc:'僭越俗麗惹人恥笑，對象美貌 -2（智能檢定：5,6）', effect:'statDown', stat:'beauty', amount:2, check:[5,6] },
@@ -263,7 +263,7 @@ const ITEM_POOL = [
   { id:'dongejiao', name:'東阿阿膠', cat:'tonic', desc:'太后御賜極品阿膠，化為護體金鐘化解下一次負面厄運', effect:'shield' },
   { id:'zhuyuntangyao', name:'助孕湯藥', cat:'tonic', desc:'氣血兩旺，使對象下次懷孕檢定多抽 1 張數字卡', effect:'pregDebuff', amount:1 },
   { id:'renshentang', name:'人參湯', cat:'tonic', desc:'奉上大補之物龍顏大悅，本回合爭寵前二名小主皆可侍寢！', effect:'doubleFavor' },
-  { id:'zaomiyiren', name:'糙米薏仁湯', cat:'tonic', desc:'清熱拔毒，即刻解除一項中毒負面效果', effect:'cureOne' },
+  { id:'zaomiyiren', name:'糙米薏仁湯', cat:'tonic', desc:'清熱拔毒，即刻解除頭風發作或時疫杯組之臥病狀態', effect:'cureSick' },
   { id:'bingtang', name:'冰糖枇杷甜湯', cat:'tonic', desc:'潤喉亮嗓才藝 +3，持續 2 回合', effect:'buff', stat:'talent', amount:3, duration:2 },
   { id:'tezhigufang', name:'特製古方', cat:'tonic', desc:'催動天癸，指定對象強制進入最佳受孕之【排卵期】', effect:'forceOvulation' },
   { id:'changxiangsi', name:'長相思', cat:'equip', desc:'先帝賜琴：才藝 +2，美貌 +1', effect:'equipBuff', stats:{talent:2,beauty:1} },
@@ -819,42 +819,33 @@ function executeAiTurn(p){
     let chosenAid = actionChoices[0];
 
     /* ================= AI 滴血認親與深度宮鬥策略樹 ================= */
-    // 策略 A：【景仁宮大審·致命絕殺】若握有私通鐵證，且抽到滴血認親，直接發起大審，+2骰絕殺對手！
     if(actionChoices.includes('dixie') && confirmedSitongTarget){
       chosenAid = 'dixie';
       target = confirmedSitongTarget;
     }
-    // 策略 A2：【皇后特權發難】皇后發動滴血認親毫無懲罰代價！若場上有身懷六甲之敵手，皇后可果斷指控
     else if(actionChoices.includes('dixie') && p.charId === 'huanghou' && others.some(o => o.pregnancy)){
       chosenAid = 'dixie';
       target = others.find(o => o.pregnancy);
     }
-    // 策略 B：【私通】排卵期且未孕，把握奪嫡受孕良機
     else if(actionChoices.includes('sitong') && phase === 'ovulation' && !p.pregnancy){
       chosenAid = 'sitong';
     }
-    // 策略 C：【把平安脈】場上有懷孕對手但底細不明，派太醫查明是否為私通龍脈
     else if(actionChoices.includes('baping') && uninvestigatedPregTarget && p.physicians > 0){
       chosenAid = 'baping';
       target = uninvestigatedPregTarget;
     }
-    // 策略 D：【下毒】持有毒藥，暗害領先者或孕婦
     else if(actionChoices.includes('poison') && poisonsInHand.length > 0){
       chosenAid = 'poison';
     }
-    // 策略 E：【煽動】策反他宮宮人
     else if(actionChoices.includes('persuade')){
       chosenAid = 'persuade';
     }
-    // 策略 F：【偷竊】盜取對手穿戴首飾
     else if(actionChoices.includes('steal') && others.some(o => o.equipped.length > 0) && p.eunuchs > 0){
       chosenAid = 'steal';
     }
-    // 策略 G：【常規把脈】
     else if(actionChoices.includes('baping') && p.physicians > 0){
       chosenAid = 'baping';
     }
-    // 策略 H：【避險】非皇后若抽到滴血認親但並無私通鐵證，絕不盲目誣告自尋死路
     else if(chosenAid === 'dixie' && !confirmedSitongTarget && p.charId !== 'huanghou'){
       const alt = actionChoices.find(a => a !== 'dixie');
       if(alt) chosenAid = alt;
@@ -984,6 +975,7 @@ function useItemDirect(p, iid){
     case 'shield': p.shieldCount = (p.shieldCount || 0) + 1; break;
     case 'doubleFavor': G.doubleFavorRound = G.round; break;
     case 'pregDebuff': p.pregDelta = (p.pregDelta || 0) + it.amount; break;
+    case 'cureSick': p.sickUntil = 0; p.buffs = p.buffs.filter(b => b.amount >= 0); break;
     case 'cureOne': { const idx = p.buffs.findIndex(b => b.amount < 0); if(idx >= 0) p.buffs.splice(idx, 1); break; }
     case 'buff': p.buffs.push({ stat:it.stat, amount:it.amount, untilRound:G.round + it.duration }); break;
     case 'forceOvulation': { const c = charOf(p.charId).cycle; p.cycleClock = c.m + c.f; break; }
@@ -1148,7 +1140,7 @@ function renderHandManager(p){
 }
 
 function isUsableTonic(it){
-  return it.cat==='tonic' && ['preventMiscarry','shield','doubleFavor','pregDebuff','cureOne','buff','forceOvulation'].includes(it.effect);
+  return it.cat==='tonic' && ['preventMiscarry','shield','doubleFavor','pregDebuff','cureSick','cureOne','buff','forceOvulation'].includes(it.effect);
 }
 
 function useItem(iid){
@@ -1174,6 +1166,10 @@ function useItem(iid){
       p.pregDelta = (p.pregDelta || 0) + it.amount;
       text = `服下了「${it.name}」，下一次懷孕檢定將${it.amount>0?'多':'少'}抽 ${Math.abs(it.amount)} 張數字卡！`;
       break;
+    case 'cureSick':
+      p.sickUntil = 0;
+      text = `服下了溫熱的「${it.name}」，清熱拔毒，頭風發作或時疫所致之臥病狀態霍然而癒！`;
+      break;
     case 'cureOne':
       { const idx = p.buffs.findIndex(b => b.amount < 0); if(idx >= 0) p.buffs.splice(idx, 1); }
       text = `服用了清熱解毒的「${it.name}」，體內毒素盡消，解除了一項負面狀態！`;
@@ -1191,6 +1187,7 @@ function useItem(iid){
   render();
 }
 
+/* ================= 沉水暗香專屬轉換邏輯 ================= */
 const CHENSHUI_TARGET_ITEMS = [
   { id:'shexiang', name:'麝香', desc:'指定對象滑胎（智能檢定：4,5,6）', cat:'poison' },
   { id:'huanyixiang', name:'歡宜香', desc:'指定對象下次懷孕檢定少抽一張數字卡', cat:'poison' },
@@ -1355,6 +1352,7 @@ function endPlayerTurn(){
   render();
 }
 
+/* ================= 3. 行動表單與視覺化對手頭像選擇 ================= */
 function otherAlivePlayers(p){
   return G.players.filter(o => o.alive && o.idx !== p.idx);
 }
@@ -1821,8 +1819,8 @@ function applyItemEffect(it, target, actor){
       break;
     case 'cycleReset':
       if(tryShieldBlock(target, it.name)) break;
-      target.cycleClock = rnd(target.cycleTotal);
-      addLog(`【氣血紊亂】${charOf(target.charId).name}服下共筆秘方，天癸大亂，月經週期全盤重置！`, { type:'drama' });
+      target.cycleClock = 0;
+      addLog(`【氣血紊亂】${charOf(target.charId).name}服下共筆秘方，經期大亂直接跳入月經期！`, { type:'drama' });
       break;
     case 'sick':
       if(tryShieldBlock(target, it.name)) break;
@@ -1852,6 +1850,10 @@ function applyItemEffect(it, target, actor){
       break;
     case 'shield':
       target.shieldCount = (target.shieldCount || 0) + 1;
+      break;
+    case 'cureSick':
+      target.sickUntil = 0;
+      target.buffs = target.buffs.filter(b => b.amount >= 0);
       break;
     case 'cureOne':
       { const idx = target.buffs.findIndex(b => b.amount < 0); if(idx >= 0) target.buffs.splice(idx, 1); }
