@@ -108,9 +108,66 @@
   .avatar-target-card .sub{ font-size:.72rem; color:#736856; }
 
   .statgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0;}
-  .statgrid div{ background:var(--paper-2); border:1px solid var(--line); padding:8px 4px; text-align:center; border-radius:2px; }
+  .statgrid div.stat-cell{
+    background:var(--paper-2); border:1px solid var(--line); padding:8px 4px;
+    text-align:center; border-radius:2px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
   .statgrid .num{font-family:'Noto Serif TC',serif; font-weight:700; font-size:1.15rem; color:var(--crimson-dark);}
-  .statgrid .lbl{font-size:.68rem; color:#6b6355;}
+  .statgrid .lbl{font-size:.68rem; color:#6b6355; margin-top:2px;}
+  .menses-table-thumb-wrap{
+    display:inline-flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:zoom-in; position:relative;
+  }
+  .menses-table-img{
+    max-height:42px; width:auto; border-radius:3px; object-fit:contain;
+    margin-bottom:4px; border:1px solid var(--gold); background:#fff; padding:1px;
+    box-shadow:0 2px 5px rgba(0,0,0,.18);
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .menses-table-thumb-wrap:hover .menses-table-img{
+    transform:scale(1.08); border-color:var(--crimson);
+    box-shadow:0 4px 10px rgba(122,31,43,.3);
+  }
+  .menses-zoom-modal{
+    position:fixed; top:50%; left:50%;
+    transform:translate(-50%, -50%) scale(0.9);
+    width:50vw; max-width:540px; min-width:300px;
+    height:50vh; max-height:480px;
+    background:var(--paper-card); border:2px solid var(--gold); border-radius:6px;
+    box-shadow:0 20px 60px rgba(0,0,0,.75), 0 0 0 2px rgba(184,147,63,.4);
+    z-index:100000; padding:10px 12px; box-sizing:border-box;
+    display:flex; flex-direction:column;
+    visibility:hidden; opacity:0; pointer-events:none;
+    transition:opacity .2s ease, transform .22s cubic-bezier(0.34, 1.56, 0.64, 1), visibility .2s ease;
+  }
+  .menses-zoom-modal.active{
+    visibility:visible; opacity:1;
+    transform:translate(-50%, -50%) scale(1);
+    pointer-events:auto;
+  }
+  .menses-zoom-header{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid var(--line);
+    font-family:'Noto Serif TC',serif; font-weight:700; font-size:.88rem; color:var(--crimson-dark);
+  }
+  .menses-zoom-hint{ font-size:.7rem; color:#8c8266; font-family:'Noto Sans TC',sans-serif; font-weight:normal; }
+  .menses-zoom-img-box{
+    flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
+    background:#fff; border:1px solid rgba(184,147,63,.25); border-radius:4px;
+    padding:6px; overflow:hidden;
+  }
+  .menses-zoom-img-box img{
+    max-width:100%; max-height:100%; width:auto; height:auto;
+    object-fit:contain; display:block;
+  }
+  .menses-zoom-footer{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:6px; padding-top:4px;
+  }
+  @media (max-width:640px){
+    .menses-zoom-modal{ width:86vw; height:52vh; min-width:unset; }
+  }
   .gate{ text-align:center; padding:40px 16px; }
   .gate .name{ font-family:'Noto Serif TC',serif; font-size:1.65rem; color:var(--crimson-dark); margin:10px 0 16px; }
   .itemlist{display:flex; flex-direction:column; gap:6px; margin:10px 0;}
@@ -199,39 +256,60 @@
   <div id="app"></div>
 </div>
 <div id="modal_container"></div>
+<div id="menses_zoom_modal" class="menses-zoom-modal" 
+     onmouseenter="cancelHideMensesZoom()" 
+     onmouseleave="hideMensesZoom(0)" 
+     onclick="hideMensesZoom(0)">
+  <div class="menses-zoom-header">
+    <span id="menses_zoom_title"><i class="fa-solid fa-calendar-days"></i> 天癸月經生理週期表</span>
+    <span class="menses-zoom-hint">游標移出即縮回</span>
+  </div>
+  <div class="menses-zoom-img-box">
+    <img id="menses_zoom_img" src="" alt="月經表放大">
+  </div>
+  <div class="menses-zoom-footer">
+    <span id="menses_zoom_phase" class="pill" style="background:var(--crimson); color:#fff; font-weight:bold;"></span>
+    <span style="font-size:0.72rem; color:#786954;">【畫面 1/4 視角 · 查閱天癸】</span>
+  </div>
+</div>
 
 <script>
 /* ============================= 全域資料庫 ============================= */
 const CHARACTERS = [
-  { id:'huanghou', name:'皇后', title:'烏拉那拉宜修', element:'土', avatar:'images/characters/char1.jpg',
+  { id:'huanghou', name:'皇后', title:'烏拉那拉宜修', element:'土',
+    avatar:'images/characters/char1.jpg', mensesImg:'images/menses/char1.png',
     resource:14, beauty:3, intel:8, talent:3, cycle:{m:2,f:3,o:1},
     quote:'「皇上！臣妾做不到……臣妾真的做不到啊！」',
     skills:[
       { key:'kuilei', name:'操偶魁儡', desc:'運用中宮威勢操弄人心，煽動時智能點數 +5', type:'passive-persuade', amount:5 },
       { key:'chunyuan', name:'純元護體', desc:'哭訴純元故情引皇上百感交集，各項能力 +5（每 3 回合限用 1 次）', type:'active-allstats', amount:5, cooldown:3 }
     ]},
-  { id:'huafei', name:'華妃', title:'年世蘭', element:'火', avatar:'images/characters/char2.jpg',
+  { id:'huafei', name:'華妃', title:'年世蘭', element:'火',
+    avatar:'images/characters/char2.jpg', mensesImg:'images/menses/char2.png',
     resource:8, beauty:8, intel:6, talent:4, cycle:{m:3,f:1,o:2},
     quote:'「賤人就是矯情！不痛痛快快吐了真話，本宮便賞她一丈紅！」',
     skills:[
       { key:'fenghuo', name:'烽火連天', desc:'大將軍之妹橫行六宮，爭寵結算第 2 名時無視點數強行登車侍寢（每 3 回合限用 1 次）', type:'active-forceserve', cooldown:3 },
       { key:'zhangshi', name:'仗勢欺人', desc:'仗著年氏威名下毒威逼，投毒檢定額外多擲 1 顆骰子（每 2 回合限用 1 次）', type:'active-poisondie', amount:1, cooldown:2 }
     ]},
-  { id:'wanpin', name:'莞嬪', title:'甄嬛', element:'木', avatar:'images/characters/char3.jpg',
+  { id:'wanpin', name:'莞嬪', title:'甄嬛', element:'木',
+    avatar:'images/characters/char3.jpg', mensesImg:'images/menses/char3.png',
     resource:6, beauty:8, intel:8, talent:7, cycle:{m:2,f:2,o:3},
     quote:'「這幾年的情愛與時光，終究是錯付了……」',
     skills:[
       { key:'dieren', name:'蝶舞飛仙', desc:'溫泉藏蝶翩躚一舞，美貌與才藝各 +5（每 3 回合限用 1 次）', type:'active-beautytalent', amount:5, cooldown:3 },
       { key:'xiangshui', name:'香水百合', desc:'迷情香引百合，可逼迫身懷六甲之嬪妃強行侍寢誘發滑胎', type:'special-mixiang' }
     ]},
-  { id:'huiguiren', name:'惠貴人', title:'沈眉莊', element:'金', avatar:'images/characters/char4.jpg',
+  { id:'huiguiren', name:'惠貴人', title:'沈眉莊', element:'金',
+    avatar:'images/characters/char4.jpg', mensesImg:'images/menses/char4.png',
     resource:6, beauty:7, intel:6, talent:5, cycle:{m:2,f:2,o:2},
     quote:'「寧可枝頭抱香死，何曾吹落北風中。」',
     skills:[
       { key:'taihou', name:'太后福澤', desc:'（常駐）獲太后庇佑，遭下毒時對方擲骰數減半', type:'passive-poisonresist' },
       { key:'tianxian', name:'天仙媚酒', desc:'處於排卵期時，可藉御酒私通懷孕，脈象天衣無縫視為正統龍胎（全場限 1 次）', type:'special-sitong-once', usesLeft:1 }
     ]},
-  { id:'anda_ying', name:'安答應', title:'安陵容', element:'水', avatar:'images/characters/char5.jpg',
+  { id:'anda_ying', name:'安答應', title:'安陵容', element:'水',
+    avatar:'images/characters/char5.jpg', mensesImg:'images/menses/char5.png',
     resource:6, beauty:5, intel:6, talent:9, cycle:{m:1,f:3,o:3},
     quote:'「原是我不配……吃苦杏仁，竟是唯一由得了自己的事了。」',
     skills:[
@@ -284,7 +362,7 @@ const ACTION_CARDS = [
   { id:'poison', name:'下毒', kind:'normal', desc:'持有毒藥時派遣宮人投毒害人，依智能點數/2擲骰判定。' },
   { id:'persuade', name:'煽動', kind:'secret', desc:'暗中策反他宮宮人叛變！被策反之宮人將永久變節，往後任務皆反噬失敗。' },
   { id:'sitong', name:'私通', kind:'secret', desc:'排卵期夜會情郎，直接抽取數字卡擲骰判定受孕。' },
-  { id:'dixie', name:'滴血認親', kind:'normal', desc:'只能指控已誕育子嗣者！於景仁宮指控皇嗣血脈，雙方依各自智能/2擲骰對決（實質私通指控方額外多擲2顆玉骰；否則被控方多擲2顆玉骰）。皇后若為指控方，敗訴仍沒收手牌並禁足2回合，但不會被杖斃。' },
+  { id:'dixie', name:'滴血認親', kind:'normal', desc:'只能指控已誕育子嗣者！於景仁宮指控皇嗣血脈，雙方依各自智能/2擲骰對決（實質私通指控方額外多擲2顆玉骰；否則被控方多擲2顆玉骰）。皇后若為指控方，敗訴仍沒收手牌並禁足2回合，但免除被杖斃淘汰。' },
   { id:'baping', name:'把平安脈', kind:'normal', desc:'派太醫強行為其他小主探脈，探查其月經週期、私通孕脈與受孕月數。' },
   { id:'gift', name:'送禮', kind:'normal', desc:'指派宮女或太監轉贈道具籠絡人心。' },
   { id:'steal', name:'偷竊', kind:'normal', desc:'派遣手腳俐落之太監暗潛他宮，盜取已穿戴佩戴之首飾器具。' },
@@ -306,8 +384,8 @@ const EVENT_CARDS = [
 /* ============================= 核心狀態機 ============================= */
 let G = null;
 let DEBUG_MODE = false;
-let GAME_MODE = 'ai'; // 'ai' (人機對戰) 或 'pass' (多人交接)
-let AI_SPEED = 650; // AI 行動延遲毫秒數
+let GAME_MODE = 'ai';
+let AI_SPEED = 650;
 
 function toggleDebugMode(){
   DEBUG_MODE = !DEBUG_MODE;
@@ -452,7 +530,6 @@ function performPregnancyRoll(p){
   return { die, cards, pregnant };
 }
 
-/* ============================= 渲染分流架構 ============================= */
 const app = document.getElementById('app');
 
 function render(){
@@ -489,7 +566,7 @@ function renderSetup(){
       ${GAME_MODE === 'ai' ? `
         <div style="background:#fffcf2; border:1px solid var(--gold); padding:10px 14px; border-radius:3px; margin-bottom:14px; font-size:.85rem; line-height:1.6;">
           <b style="color:var(--crimson-dark);"><i class="fa-solid fa-user-crown"></i> 人機對戰說明：</b><br>
-          請點選一位小主作為<b>【您親自操控的主位】</b>（金框標記）；其餘勾選之小主將化身為<b>【深宮 AI 對手】</b>（自主謀劃、暗中私通下毒、把脈獲取鐵證後發動滴血認親大審）。
+          請點選一位小主作為<b>【您親自操控的主位】</b>（金框標記）；其餘勾選之小主將化身為<b>【深宮 AI 對手】</b>（自主謀劃、暗中私通下毒、把脈獲取鐵證後發動景仁宮滴血認親大審）。
         </div>
       ` : `
         <div style="background:#fcf8f0; border:1px solid var(--line); padding:10px 14px; border-radius:3px; margin-bottom:14px; font-size:.85rem; line-height:1.6;">
@@ -534,7 +611,7 @@ function renderSetup(){
       </div>
     </div>
     <div class="footer-note">
-      十年前實體卡牌原版數位化呈現。人機對戰模式下，AI 嬪妃將恪遵原版心計演繹，暗結珠胎與變節下毒皆深藏不露！
+      經典桌遊線上數位典藏版。人機對戰模式下，AI 嬪妃將恪遵原版心計演繹，暗結珠胎與變節下毒皆深藏不露！
     </div>
   `;
 }
@@ -597,7 +674,11 @@ function renderPlayerTurn(){
   }
 
   const phase = cyclePhase(p);
-  const phaseLabel = { menses:'【月經期】(氣血虧虛·嚴禁侍寢)', follicular:'【濾泡期】(侍寢無法受孕)', ovulation:'【排卵期】(龍裔天降·受孕黃金期)' }[phase];
+  const phaseLabel = {
+    menses:'【月經期】(氣血虧虛·禁侍寢)',
+    follicular:'【濾泡期】(侍寢無法受孕)',
+    ovulation:'【排卵期】(龍裔天降·黃金期)'
+  }[phase];
   const sick = G.round <= p.sickUntil;
 
   let body = '';
@@ -614,10 +695,19 @@ function renderPlayerTurn(){
       </div>
 
       <div class="statgrid">
-        <div><div class="num">${effectiveStat(p,'beauty')}</div><div class="lbl">美貌</div></div>
-        <div><div class="num">${effectiveStat(p,'intel')}</div><div class="lbl">智能</div></div>
-        <div><div class="num">${effectiveStat(p,'talent')}</div><div class="lbl">才藝</div></div>
-        <div><div class="num" style="font-size:.9rem; color:var(--crimson-dark);">${phaseLabel}</div><div class="lbl">月經週期（天機莫洩）</div></div>
+        <div class="stat-cell"><div class="num">${effectiveStat(p,'beauty')}</div><div class="lbl">美貌</div></div>
+        <div class="stat-cell"><div class="num">${effectiveStat(p,'intel')}</div><div class="lbl">智能</div></div>
+        <div class="stat-cell"><div class="num">${effectiveStat(p,'talent')}</div><div class="lbl">才藝</div></div>
+        <div class="stat-cell" style="padding:4px 2px; position:relative;">
+          <div class="menses-table-thumb-wrap" 
+               onmouseenter="showMensesZoom('${c.mensesImg}', '${c.name}', '${phaseLabel}')" 
+               onmouseleave="hideMensesZoom()" 
+               onclick="showMensesZoom('${c.mensesImg}', '${c.name}', '${phaseLabel}')">
+            <img src="${c.mensesImg}" class="menses-table-img" alt="${c.name}月經表" onerror="this.onerror=null; this.src='https://placehold.co/100x140/fbf6e8/7a1f2b?text=${encodeURIComponent(c.name)}';">
+          </div>
+          <div class="num" style="font-size:.76rem; color:var(--crimson-dark); line-height:1.2;">${phaseLabel}</div>
+          <div class="lbl">月經週期（游標懸停放大1/4）</div>
+        </div>
       </div>
 
       <p class="muted">
@@ -754,7 +844,6 @@ function executeAiTurn(p){
     }
 
     // 3. AI 特技判斷
-    // 安陵容製香
     if(p.charId === 'anda_ying' && (p.skillUsesLeft['chenshui'] || 0) > 0 && p.hand.length > 0){
       const hasPoison = p.hand.some(iid => itemOf(iid).cat === 'poison');
       if(!hasPoison){
@@ -766,7 +855,6 @@ function executeAiTurn(p){
       }
     }
 
-    // 沈眉莊天仙媚酒：私通不被太醫發現，脈象視為天衣無縫之正統龍胎 (fromSitong: false)
     if(p.charId === 'huiguiren' && cyclePhase(p) === 'ovulation' && (p.skillUsesLeft['tianxian'] || 0) > 0){
       p.skillUsesLeft['tianxian']--;
       addLog(`【天仙媚酒】惠貴人藉御酒之意深夜私通幽會！太醫平安脈亦查不出異狀，視為正統龍胎！`, { type:'drama' });
@@ -778,7 +866,6 @@ function executeAiTurn(p){
       return;
     }
 
-    // 皇后/甄嬛增益特技
     c.skills.forEach(s => {
       if(SELF_BUFF_SKILL_TYPES.includes(s.type) && skillAvailable(p, s.key)){
         if(s.type === 'active-allstats'){
@@ -799,7 +886,6 @@ function executeAiTurn(p){
       return;
     }
 
-    // 4. 抽取 3 張行動卡並進入 AI 策略樹
     const actionChoices = shuffle(ACTION_CARDS.map(a => a.id)).slice(0, 3);
     const others = otherAlivePlayers(p);
     if(!others.length){
@@ -820,8 +906,6 @@ function executeAiTurn(p){
 
     let chosenAid = actionChoices[0];
 
-    /* ================= AI 滴血認親與深度宮鬥策略樹 ================= */
-    // 規則：滴血認親只能指控「已經生下孩子」的人
     if(actionChoices.includes('dixie') && confirmedSitongTarget){
       chosenAid = 'dixie';
       target = confirmedSitongTarget;
@@ -1601,7 +1685,6 @@ function consumeItem(p, iid){
   if(idx >= 0) p.hand.splice(idx, 1);
 }
 
-/* ================= 4. 行動結算邏輯 ================= */
 function tryShieldBlock(target, label){
   if(target.shieldCount > 0){
     target.shieldCount--;
@@ -3047,10 +3130,54 @@ function closePalaceModal(){
   mc.innerHTML = '';
 }
 
+/* ============================= 月經表 1/4 畫面懸停縮放器 ============================= */
+let _mensesZoomTimeout = null;
+
+function showMensesZoom(imgSrc, charName, phaseLabel){
+  if(_mensesZoomTimeout){
+    clearTimeout(_mensesZoomTimeout);
+    _mensesZoomTimeout = null;
+  }
+  const modal = document.getElementById('menses_zoom_modal');
+  if(!modal) return;
+  
+  const titleEl = document.getElementById('menses_zoom_title');
+  const imgEl = document.getElementById('menses_zoom_img');
+  const phaseEl = document.getElementById('menses_zoom_phase');
+  
+  if(titleEl) titleEl.innerHTML = `<i class="fa-solid fa-calendar-days"></i> ${charName} · 天癸月經生理週期表`;
+  if(imgEl){
+    imgEl.src = imgSrc;
+    imgEl.onerror = function(){
+      this.onerror = null;
+      this.src = 'https://placehold.co/320x420/fbf6e8/7a1f2b?text=' + encodeURIComponent(charName + '天癸生理表');
+    };
+  }
+  if(phaseEl) phaseEl.textContent = phaseLabel || '';
+  
+  modal.classList.add('active');
+}
+
+function hideMensesZoom(delay = 140){
+  if(_mensesZoomTimeout) clearTimeout(_mensesZoomTimeout);
+  _mensesZoomTimeout = setTimeout(() => {
+    const modal = document.getElementById('menses_zoom_modal');
+    if(modal) modal.classList.remove('active');
+    _mensesZoomTimeout = null;
+  }, delay);
+}
+
+function cancelHideMensesZoom(){
+  if(_mensesZoomTimeout){
+    clearTimeout(_mensesZoomTimeout);
+    _mensesZoomTimeout = null;
+  }
+}
+
 function openAssetManagerModal(){
   const html = `
     <div class="muted" style="margin-bottom:12px;">
-      您保有十年前的實體卡牌原畫嗎？在此可直接點選小主，上傳替換為您的原版立繪圖檔（圖片僅暫存於您本地瀏覽器記憶體中）：
+      您保有實體卡牌原畫嗎？在此可直接點選小主，上傳替換為您的原版立繪圖檔（圖片僅暫存於您本地瀏覽器記憶體中）：
     </div>
     <div class="itemlist">
       ${CHARACTERS.map(c => `
@@ -3339,13 +3466,6 @@ function renderSimulationModal(data){
             </div>
           `;
         }).join('')}
-      </div>
-
-      <div style="background:#f9f5ea; border:1px solid var(--gold); padding:10px 12px; border-radius:3px; margin-top:12px; font-size:.8rem; color:#5c4f3d;">
-        <b><i class="fa-solid fa-lightbulb"></i> 策士戰術解構：</b><br>
-        • <b>莞嬪（甄嬛）</b> 擁有美貌 8 + 才藝 7 的基底，配合每 3 回合發動的【蝶舞飛仙】（美才各+5），爭寵數值常態碾壓六宮，加上週期有高達 <b>42.9% 的排卵期</b>，受孕頻率極高。<br>
-        • <b>華妃（年世蘭）</b> 憑藉【烽火連天】在爭寵第二時強制登車，並以【仗勢欺人】多擲骰下毒，極具翻盤爆發力。<br>
-        • <b>皇后（宜修）</b> 雖初始資源豐沛、智能高達 8，但<b>排卵期僅佔 1/6 (16.7%)</b>，極難自力誕育雙阿哥，偏向全場下毒控場型角色。
       </div>
 
       <div class="row" style="margin-top:14px; justify-content:space-between;">
