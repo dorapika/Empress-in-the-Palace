@@ -284,7 +284,7 @@ const ACTION_CARDS = [
   { id:'poison', name:'下毒', kind:'normal', desc:'持有毒藥時派遣宮人投毒害人，依智能點數/2擲骰判定。' },
   { id:'persuade', name:'煽動', kind:'secret', desc:'暗中策反他宮宮人叛變！被策反之宮人將永久變節，往後任務皆反噬失敗。' },
   { id:'sitong', name:'私通', kind:'secret', desc:'排卵期夜會情郎，直接抽取數字卡擲骰判定受孕。' },
-  { id:'dixie', name:'滴血認親', kind:'normal', desc:'於景仁宮指控皇嗣血脈！雙方依各自智能/2擲骰對決（實質私通指控方額外多擲2顆玉骰；否則被控方多擲2顆玉骰）。皇后若為指控方，敗訴完全免受任何懲處。' },
+  { id:'dixie', name:'滴血認親', kind:'normal', desc:'只能指控已誕育子嗣者！於景仁宮指控皇嗣血脈，雙方依各自智能/2擲骰對決（實質私通指控方額外多擲2顆玉骰；否則被控方多擲2顆玉骰）。皇后若為指控方，敗訴仍沒收手牌並禁足2回合，但不會被杖斃。' },
   { id:'baping', name:'把平安脈', kind:'normal', desc:'派太醫強行為其他小主探脈，探查其月經週期、私通孕脈與受孕月數。' },
   { id:'gift', name:'送禮', kind:'normal', desc:'指派宮女或太監轉贈道具籠絡人心。' },
   { id:'steal', name:'偷竊', kind:'normal', desc:'派遣手腳俐落之太監暗潛他宮，盜取已穿戴佩戴之首飾器具。' },
@@ -385,6 +385,7 @@ function initGame(playerConfigs){
         knownSitong:{},
         alive:true,
         princes:0, princesses:0,
+        hasSitongBirth:false,
         miscarryStackCount:0
       };
     }),
@@ -808,7 +809,8 @@ function executeAiTurn(p){
 
     if(!p.knownSitong) p.knownSitong = {};
 
-    const confirmedSitongTarget = others.find(o => o.pregnancy && p.knownSitong[o.idx] === true);
+    const birthEligible = o => (o.princes > 0 || o.princesses > 0);
+    const confirmedSitongTarget = others.find(o => birthEligible(o) && p.knownSitong[o.idx] === true);
     const uninvestigatedPregTarget = others.find(o => o.pregnancy && p.knownSitong[o.idx] === undefined);
 
     let target = confirmedSitongTarget || others.find(o => o.pregnancy) || others.slice().sort((a,b)=>(b.princes*2 + b.princesses) - (a.princes*2 + a.princesses))[0];
@@ -819,13 +821,14 @@ function executeAiTurn(p){
     let chosenAid = actionChoices[0];
 
     /* ================= AI 滴血認親與深度宮鬥策略樹 ================= */
+    // 新規則：滴血認親只能指控「已經生下孩子」的人，不再是指控孕婦
     if(actionChoices.includes('dixie') && confirmedSitongTarget){
       chosenAid = 'dixie';
       target = confirmedSitongTarget;
     }
-    else if(actionChoices.includes('dixie') && p.charId === 'huanghou' && others.some(o => o.pregnancy)){
+    else if(actionChoices.includes('dixie') && p.charId === 'huanghou' && others.some(birthEligible)){
       chosenAid = 'dixie';
-      target = others.find(o => o.pregnancy);
+      target = others.find(birthEligible);
     }
     else if(actionChoices.includes('sitong') && phase === 'ovulation' && !p.pregnancy){
       chosenAid = 'sitong';
@@ -927,7 +930,7 @@ function executeAiAction(p, aid, target, poisonsInHand){
     }
     case 'baping': {
       if(!p.knownSitong) p.knownSitong = {};
-      const isSitong = !!(target.pregnancy && target.pregnancy.fromSitong);
+      const isSitong = !!target.hasSitongBirth || !!(target.pregnancy && target.pregnancy.fromSitong);
       p.knownSitong[target.idx] = isSitong;
       addLog(`${c.name}宣召太醫密探${tc.name}之脈象，洞悉了六宮深閨秘辛。`);
       break;
@@ -1351,10 +1354,11 @@ function otherAlivePlayers(p){
   return G.players.filter(o => o.alive && o.idx !== p.idx);
 }
 
-function renderVisualTargetSelector(selectedIdx){
+function renderVisualTargetSelector(selectedIdx, filterFn){
   const p = currentPlayer();
-  const others = otherAlivePlayers(p);
-  if(!others.length) return '<p class="muted">（後宮寂寥，已無其他小主）</p>';
+  let others = otherAlivePlayers(p);
+  if(typeof filterFn === 'function') others = others.filter(filterFn);
+  if(!others.length) return '<p class="muted">（後宮寂寥，暫無符合條件之小主）</p>';
   return `
     <div class="avatar-card-grid">
       ${others.map(o => {
@@ -1481,15 +1485,15 @@ function renderActionForm(p){
   if(a.id === 'dixie'){
     return `
       <div class="fieldset">
-        <label><i class="fa-solid fa-crosshairs"></i> 於景仁宮指控誰的皇嗣血脈不正（點選頭像）：</label>
-        ${renderVisualTargetSelector(targetIdx)}
+        <label><i class="fa-solid fa-crosshairs"></i> 於景仁宮指控誰的皇嗣血脈不正（僅限已誕育子嗣者，點選頭像）：</label>
+        ${renderVisualTargetSelector(targetIdx, o => (o.princes > 0 || o.princesses > 0))}
       </div>
       <div class="drama-quote"><span>「若這碗水裡有白礬，無論是誰的血融在一起，都是天理不容的冤枉！」</span></div>
       <p class="muted" style="color:var(--crimson);">
-        <i class="fa-solid fa-scale-balanced"></i> <b>景仁宮審判制 · 智能對決</b>：雙方依各自【智能 ÷ 2】擲出天命玉骰比大小（點數大者勝）：<br>
-        • <b>若目標實為私通受孕</b>：指控方握有鐵證，享<b>【鐵證如山】額外多擲 2 顆玉骰</b>！指控方勝則對方當場賜死出局；對方勝則指控方扣光手牌並禁足 2 回合。<br>
-        • <b>若目標為天子正統龍胎或未懷孕</b>：目標身正蒙天子庇佑，享<b>【皇權庇佑】額外多擲 2 顆玉骰</b>！指控方敗則犯大不敬死罪<b>當場杖斃出局</b>；指控方勝則目標屈打成招美貌 -5 點（若有孕則滑胎）。
-        ${p.charId === 'huanghou' ? '<br><b style="color:var(--gold);"><i class="fa-solid fa-crown"></i>【中宮母儀特權】皇后若為指控方，即便審判失利亦蒙聖恩體諒，不受沒收手牌、禁足或杖斃等任何不利懲罰！</b>' : ''}
+        <i class="fa-solid fa-scale-balanced"></i> <b>景仁宮審判制 · 智能對決</b>：滴血認親只能指控<b>已經誕下子嗣</b>之人，雙方依各自【智能 ÷ 2】擲出天命玉骰比大小（點數大者勝）：<br>
+        • <b>若該子嗣實為私通所出</b>：指控方握有鐵證，享<b>【鐵證如山】額外多擲 2 顆玉骰</b>！指控方勝則對方當場賜死出局；對方勝則指控方扣光手牌並禁足 2 回合。<br>
+        • <b>若該子嗣為天子正統龍胎</b>：目標身正蒙天子庇佑，享<b>【皇權庇佑】額外多擲 2 顆玉骰</b>！指控方敗則犯大不敬死罪<b>當場杖斃出局</b>；指控方勝則目標屈打成招美貌 -5 點（若又有身孕則滑胎）。
+        ${p.charId === 'huanghou' ? '<br><b style="color:var(--gold);"><i class="fa-solid fa-crown"></i>【中宮母儀特權】皇后若為指控方，即便審判失利亦蒙聖恩體諒免於杖斃，但仍會被沒收手牌並禁足 2 回合！</b>' : ''}
       </p>
       <div class="row" style="margin-top:12px;">
         <button class="gold" style="background:var(--crimson);" onclick="resolveDixie()">
@@ -1921,7 +1925,7 @@ function resolveDixie(){
   const pBaseDice = Math.max(1, Math.floor(pIntel / 2));
   const tBaseDice = Math.max(1, Math.floor(tIntel / 2));
 
-  const isTrulySitong = !!(target.pregnancy && target.pregnancy.fromSitong);
+  const isTrulySitong = !!target.hasSitongBirth;
 
   const pBonusDice = isTrulySitong ? 2 : 0;
   const tBonusDice = isTrulySitong ? 0 : 2;
@@ -1979,7 +1983,7 @@ function renderDixieAnimView(p){
           <div class="pill" style="margin-top:4px; font-size:.68rem; background:${anim.isTrulySitong ? '#fce8e6' : '#e6f4ea'}; color:${anim.isTrulySitong ? '#c5221f' : '#137333'};">
             ${anim.isTrulySitong ? '實為私通胎（指控方+2骰）' : '正統胎/未孕（被指控方+2骰）'}
           </div>
-          ${isHuanghouAccuser ? '<div class="pill" style="margin-top:3px; font-size:.64rem; background:#fef3e2; color:var(--crimson); border-color:var(--gold);">👑 皇后指控：敗訴免罰</div>' : ''}
+          ${isHuanghouAccuser ? '<div class="pill" style="margin-top:3px; font-size:.64rem; background:#fef3e2; color:var(--crimson); border-color:var(--gold);">👑 皇后指控：敗訴沒收手牌禁足，但免於杖斃</div>' : ''}
         </div>
 
         <div style="text-align:center; flex:1;">
@@ -2095,7 +2099,9 @@ function finishDixieAnim(){
       resultText = `【景仁宮風雲·鐵證如山】${pChar.name}（${anim.pSum}點）大勝${tChar.name}（${anim.tSum}點）！私通血脈確鑿，${tChar.name}被打入冷宮賜自盡，淘汰出局！`;
     } else if(anim.pSum < anim.tSum){
       if(isHuanghouAccuser){
-        resultText = `【景仁宮大審·中宮恩赦】${tChar.name}辯才無礙（${anim.tSum}點 vs ${anim.pSum}點）自證清白！然皇后位居中宮母儀天下，皇上感念舊情未加降旨，皇后手牌不失且無須禁足！`;
+        p.hand = [];
+        p.sickUntil = G.round + 2;
+        resultText = `【景仁宮大審·中宮薄懲】${tChar.name}辯才無礙（${anim.tSum}點 vs ${anim.pSum}點）自證清白！皇后雖母儀天下免於杖斃，然查察失實仍遭罰沒手中全部道具卡，並被禁足 2 回合！`;
       } else {
         p.hand = [];
         p.sickUntil = G.round + 2;
@@ -2107,7 +2113,9 @@ function finishDixieAnim(){
   } else {
     if(anim.pSum < anim.tSum){
       if(isHuanghouAccuser){
-        resultText = `【景仁宮大審·母儀無咎】${tChar.name}身正獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）！然皇后受太后力保與祖宗家法庇護，皇上好言相勸，皇后免於杖斃且毫髮無損！`;
+        p.hand = [];
+        p.sickUntil = G.round + 2;
+        resultText = `【景仁宮大審·母儀薄懲】${tChar.name}身正獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）！皇后受太后力保免於杖斃，然妄動皇嗣清白仍遭罰沒手中全部道具卡，並被禁足 2 回合！`;
       } else {
         p.alive = false;
         resultText = `【誣陷天子龍胎·當場杖斃】${tChar.name}身正獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）！${pChar.name}妄議皇家龍嗣大逆不道，當場被杖斃淘汰！`;
@@ -2151,7 +2159,7 @@ function resolveBaping(){
   }
 
   if(!p.knownSitong) p.knownSitong = {};
-  p.knownSitong[targetIdx] = !!(target.pregnancy && target.pregnancy.fromSitong);
+  p.knownSitong[targetIdx] = !!target.hasSitongBirth || !!(target.pregnancy && target.pregnancy.fromSitong);
 
   const phase = cyclePhase(target);
   const phaseText = { menses:'氣血虛浮之【月經期】', follicular:'平和蓄力之【濾泡期】', ovulation:'胞宮溫熱最適受孕之【排卵期】' }[phase];
@@ -2783,6 +2791,7 @@ function proceedDeliveryQueue(){
         isPrince = (die % 2 === 1);
         addLog(`【逆天改命】${charOf(target.charId).name}服下秘傳「包生男」，分娩重定乾坤！`, { type:'drama' });
       }
+      if(target.pregnancy && target.pregnancy.fromSitong){ target.hasSitongBirth = true; }
       if(isPrince) target.princes++; else target.princesses++;
       target.pregnancy = null;
       addLog(`【景陽鐘鳴】${charOf(target.charId).name}順利分娩，誕育了一位${isPrince ? '【阿哥】':'【公主】'}！`, { type:'drama' });
@@ -2917,6 +2926,7 @@ function rerollWithBaosheng(){
 function finishOneDelivery(){
   const target = G.players[G.deliveryTarget];
   const r = G.deliveryResult;
+  if(target.pregnancy && target.pregnancy.fromSitong){ target.hasSitongBirth = true; }
   if(r.isPrince) target.princes++; else target.princesses++;
   target.pregnancy = null;
   addLog(`【景陽鐘鳴】${charOf(target.charId).name}順利分娩，誕育了一位${r.isPrince ? '【阿哥】':'【公主】'}！`, { type:'drama' });
@@ -3120,7 +3130,7 @@ function simulateSingleHeadlessGame(){
       pregnancy: null, skillCooldownUntil:{},
       skillUsesLeft: Object.fromEntries(c.skills.filter(s=>s.usesLeft!==undefined).map(s=>[s.key,s.usesLeft])),
       knownSitong:{},
-      alive: true, princes:0, princesses:0, miscarryStackCount:0,
+      alive: true, princes:0, princesses:0, hasSitongBirth:false, miscarryStackCount:0,
       favors:0, pregs:0
     };
   });
@@ -3163,22 +3173,26 @@ function simulateSingleHeadlessGame(){
 
       const others = players.filter(o => o.alive && o.idx !== p.idx);
       if(others.length){
-        const confirmedSitong = others.find(o => o.pregnancy && p.knownSitong[o.idx]);
+        const birthEligible = o => (o.princes > 0 || o.princesses > 0);
+        const confirmedSitong = others.find(o => birthEligible(o) && p.knownSitong[o.idx]);
+        const anyBirthEligible = others.find(birthEligible);
         const target = confirmedSitong || others.find(o => o.pregnancy) || others[rnd(others.length)];
         const phase = (p.cycleClock < c.cycle.m) ? 'menses' : (p.cycleClock < c.cycle.m + c.cycle.f ? 'follicular' : 'ovulation');
         const poisons = p.hand.filter(id => itemOf(id).cat === 'poison');
 
-        if((confirmedSitong && rnd(100) < 65) || (p.charId === 'huanghou' && target && target.pregnancy && rnd(100) < 40)){
-          const isSitongTarget = !!(target.pregnancy && target.pregnancy.fromSitong);
+        if((confirmedSitong && rnd(100) < 65) || (p.charId === 'huanghou' && anyBirthEligible && rnd(100) < 40)){
+          const dixieTarget = confirmedSitong || anyBirthEligible;
+          const isSitongTarget = !!dixieTarget.hasSitongBirth;
           let pDice = Math.max(1, Math.floor(effectiveStat(p, 'intel') / 2)) + (isSitongTarget ? 2 : 0);
-          let tDice = Math.max(1, Math.floor(effectiveStat(target, 'intel') / 2)) + (isSitongTarget ? 0 : 2);
+          let tDice = Math.max(1, Math.floor(effectiveStat(dixieTarget, 'intel') / 2)) + (isSitongTarget ? 0 : 2);
           let pSum = Array.from({length:pDice}, ()=>rollDie()).reduce((a,b)=>a+b,0);
           let tSum = Array.from({length:tDice}, ()=>rollDie()).reduce((a,b)=>a+b,0);
           if(pSum > tSum){
             if(isSitongTarget){
-              target.alive = false;
+              dixieTarget.alive = false;
             } else {
-              target.pregnancy = null;
+              dixieTarget.pregnancy = null;
+              dixieTarget.buffs = dixieTarget.buffs || [];
             }
           } else if(pSum < tSum && p.charId !== 'huanghou'){
             if(!isSitongTarget){
@@ -3208,7 +3222,7 @@ function simulateSingleHeadlessGame(){
             }
           }
         } else if(target.pregnancy && p.physicians > 0){
-          p.knownSitong[target.idx] = !!(target.pregnancy && target.pregnancy.fromSitong);
+          p.knownSitong[target.idx] = !!target.hasSitongBirth || !!(target.pregnancy && target.pregnancy.fromSitong);
         }
       }
     }
@@ -3257,6 +3271,7 @@ function simulateSingleHeadlessGame(){
           d = rollDie();
           isP = (d % 2 === 1);
         }
+        if(p.pregnancy && p.pregnancy.fromSitong){ p.hasSitongBirth = true; }
         if(isP) p.princes++; else p.princesses++;
         p.pregnancy = null;
       }
