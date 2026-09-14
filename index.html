@@ -1021,6 +1021,8 @@ function renderPlayerTurn(){
     body = renderActionForm(p);
   } else if(G.turnStep==='poisonAnim'){
     body = renderPoisonAnimView(p);
+  } else if(G.turnStep==='persuadeAnim'){
+    body = renderPersuadeAnimView(p);
   } else if(G.turnStep==='dixieAnim'){
     body = renderDixieAnimView(p);
   } else if(G.turnStep==='dixieResult'){
@@ -2245,34 +2247,181 @@ function resolvePersuade(){
   const targetIdx = G.pendingAction.targetIdx;
   const role = val('f_role');
   const target = G.players[targetIdx];
-  let intel = effectiveStat(p, 'intel');
+  const c = charOf(p.charId);
+  const tc = charOf(target.charId);
+  const roleCount = { maid:target.maids, eunuch:target.eunuchs, physician:target.physicians }[role];
+  const turnedCount = target.staffTurned[role] || 0;
+  const roleName = { maid:'宮女', eunuch:'太監', physician:'太醫' }[role];
 
-  const persuadeSkill = charOf(p.charId).skills.find(s => s.type === 'passive-persuade');
-  if(persuadeSkill) intel += persuadeSkill.amount;
+  if(roleCount < 1){
+    G.lastActionResultText = `策反失敗：${tc.name}宮中目前並無此種宮人可供收買。`;
+    G.turnStep = 'actionResult';
+    syncGameState();
+    render();
+    return;
+  }
+  if(turnedCount >= roleCount){
+    G.lastActionResultText = `策反無效：${tc.name}宮中現有的 ${roleCount} 名【${roleName}】已全數被策反變節，無忠心宮人可再收買。`;
+    G.turnStep = 'actionResult';
+    syncGameState();
+    render();
+    return;
+  }
+
+  const baseIntel = effectiveStat(p, 'intel');
+  let intel = baseIntel;
+  const persuadeSkill = c.skills.find(s => s.type === 'passive-persuade');
+  const persuadeBonus = persuadeSkill ? persuadeSkill.amount : 0;
+  intel += persuadeBonus;
 
   const dice = Math.max(1, Math.floor(intel / 2));
   const rolls = Array.from({ length:dice }, () => rollDie());
   const success = rolls.some(r => r === 5 || r === 6);
 
-  const roleCount = { maid:target.maids, eunuch:target.eunuchs, physician:target.physicians }[role];
-  const turnedCount = target.staffTurned[role] || 0;
-  const roleName = { maid:'宮女', eunuch:'太監', physician:'太醫' }[role];
-  let text = '';
+  G.persuadeAnim = {
+    stage: 'rolling',
+    _started: false,
+    dice,
+    rolls,
+    need: [5, 6],
+    success,
+    role,
+    roleName,
+    roleCount,
+    turnedCount,
+    targetIdx,
+    baseIntel,
+    persuadeBonus
+  };
+  G.turnStep = 'persuadeAnim';
+  syncGameState();
+  render();
+}
 
-  if(roleCount < 1){
-    text = `策反失敗：${charOf(target.charId).name}宮中目前並無此種宮人可供收買。`;
-  } else if(turnedCount >= roleCount){
-    text = `策反無效：${charOf(target.charId).name}宮中現有的 ${roleCount} 名【${roleName}】已全數被策反變節，無忠心宮人可再收買。`;
-  } else if(success){
-    target.staffTurned[role] = turnedCount + 1;
-    text = `【策反大獲全勝】你施展巧言與重金，成功令${charOf(target.charId).name}宮中的一名【${roleName}】暗中簽下投名狀！（該宮【${roleName}】已變節 ${target.staffTurned[role]} / ${roleCount} 人）若其宮中此類宮人全數叛變，往後指派必生反噬！`;
-    addLog(`${charOf(p.charId).name}暗中於西華門密會他宮眼線，播下了變節的種子……`, { secret:true, revealRound:G.round+1 });
+function renderPersuadeAnimView(p){
+  const anim = G.persuadeAnim;
+  const target = G.players[anim.targetIdx];
+  const actorChar = charOf(p.charId);
+  const targetChar = charOf(target.charId);
+  const isSettled = (anim.stage === 'settled' || anim.stage === 'result');
+
+  let html = `
+    <div style="background:#fffcf2; border:1px solid var(--gold); padding:10px 14px; border-radius:3px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-around; align-items:center;">
+        <div style="text-align:center;">
+          <img src="${actorChar.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/70x70/7a1f2b/f4e5bf?text=${encodeURIComponent(actorChar.name)}'">
+          <div style="font-weight:bold; font-size:.85rem; color:var(--crimson-dark); margin-top:3px;">${actorChar.name}</div>
+          <div style="font-size:.72rem; color:#7a6d59;">智能：${anim.baseIntel} 點</div>
+        </div>
+        <div style="text-align:center; color:var(--jade); font-size:1.4rem;">
+          <i class="fa-solid fa-handshake-simple fa-beat"></i>
+          <div style="font-size:.72rem; color:#2e6f40; font-weight:bold; margin-top:2px;">密謀策反【${anim.roleName}】</div>
+        </div>
+        <div style="text-align:center;">
+          <img src="${targetChar.avatar}" class="char-avatar" onerror="this.src='https://placehold.co/70x70/7a1f2b/f4e5bf?text=${encodeURIComponent(targetChar.name)}'">
+          <div style="font-weight:bold; font-size:.85rem; color:var(--crimson-dark); margin-top:3px;">${targetChar.name}</div>
+          <div style="font-size:.72rem; color:#7a6d59;">${targetChar.title}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fcf8f0; border-left:3px solid var(--jade); padding:8px 12px; margin-bottom:12px; font-size:.82rem; line-height:1.6; color:#5c4f3e;">
+      <b>【智能檢定算法】</b>：小主智能 ${anim.baseIntel} 點
+      ${anim.persuadeBonus ? ` + 皇后【操偶魁儡】威勢 +${anim.persuadeBonus} 智能 (共 ${anim.baseIntel + anim.persuadeBonus} 點)` : ''}
+      ÷ 2 = <b style="color:var(--jade);">${anim.dice} 顆天命玉骰</b>。<br>
+      <b>【策反成功條件】</b>：玉骰中只要出現【<b style="color:var(--crimson);">5 或 6</b>】點，即算收買變節成功！
+    </div>
+
+    <p class="muted" style="text-align:center; margin:4px 0;">
+      ${anim.stage === 'rolling' 
+        ? '<i class="fa-solid fa-dice fa-spin"></i> 暗室密會接頭中，天命玉骰翻滾考驗…' 
+        : (anim.success 
+            ? '<b style="color:var(--jade);"><i class="fa-solid fa-check"></i> 玉骰命中（出現 5 或 6）！策反得手！</b>' 
+            : '<b style="color:#786c57;"><i class="fa-solid fa-xmark"></i> 點數未中，打草未成無功而返！</b>')}
+    </p>
+
+    <div class="dice-multi-wrap">
+      ${anim.rolls.map((val, idx) => {
+        const isMatch = isSettled && (val === 5 || val === 6);
+        return `
+          <div id="ps_die_${idx}" class="dice-box ${isSettled ? 'settled' : ''} ${isMatch ? 'match' : ''}">
+            ${isSettled ? val : '<i class="fa-solid fa-question"></i>'}
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    ${anim.stage === 'result' ? `
+      <div style="text-align:center; margin-top:14px;">
+        ${anim.success ? `
+          <div class="drama-quote" style="background:#f0faf4; border-color:var(--jade); color:#125e34; font-size:.95rem;">
+            <span><i class="fa-solid fa-certificate"></i> 【暗室策反大獲全勝】天命玉骰擲出【${anim.rolls.join('、')}】（命中所需點數）！你施展巧言與重金，成功令${targetChar.name}宮中的一名【${anim.roleName}】暗中簽下投名狀！</span>
+          </div>
+          <div class="row" style="justify-content:center; margin-top:12px;">
+            <button class="gold" onclick="finishPersuadeAnim()"><i class="fa-solid fa-file-signature"></i> 收納投名狀 · 結算暗樁變節</button>
+          </div>
+        ` : `
+          <div class="drama-quote" style="font-size:.92rem;">
+            <span>【策反失利】天命玉骰擲出【${anim.rolls.join('、')}】（未能擲出 5 或 6），對方奴才心存顧慮不敢應允，所幸並未打草驚蛇。</span>
+          </div>
+          <div class="row" style="justify-content:center; margin-top:12px;">
+            <button class="secondary" onclick="finishPersuadeAnim()"><i class="fa-solid fa-arrow-right"></i> 悄然退下 · 結束策反行動</button>
+          </div>
+        `}
+      </div>
+    ` : ''}
+  `;
+
+  if(anim.stage === 'rolling' && !anim._started){
+    anim._started = true;
+    runPersuadeDiceAnimation();
+  }
+
+  return html;
+}
+
+function runPersuadeDiceAnimation(){
+  const anim = G.persuadeAnim;
+  const faces = ['1','2','3','4','5','6'];
+  let ticks = 0;
+  const iv = setInterval(() => {
+    ticks++;
+    for(let i=0; i<anim.dice; i++){
+      const el = document.getElementById('ps_die_' + i);
+      if(el) el.textContent = faces[rnd(6)];
+    }
+    if(ticks >= 11){
+      clearInterval(iv);
+      anim.stage = 'settled';
+      render();
+      setTimeout(() => {
+        anim.stage = 'result';
+        render();
+      }, 500);
+    }
+  }, 75);
+}
+
+function finishPersuadeAnim(){
+  const anim = G.persuadeAnim;
+  if(!anim) return;
+  const p = currentPlayer();
+  const target = G.players[anim.targetIdx];
+  const c = charOf(p.charId);
+  const tc = charOf(target.charId);
+
+  let text = '';
+  if(anim.success){
+    target.staffTurned[anim.role] = anim.turnedCount + 1;
+    text = `【策反大獲全勝】天命玉骰擲出【${anim.rolls.join('、')}】（命中 5 或 6）！你施展巧言與重金，成功令${tc.name}宮中的一名【${anim.roleName}】暗中簽下投名狀！（該宮【${anim.roleName}】已變節 ${target.staffTurned[anim.role]} / ${anim.roleCount} 人）若其宮中此類宮人全數叛變，往後指派必生反噬！`;
+    addLog(`${c.name}暗中於西華門密會他宮眼線，播下了變節的種子……`, { secret:true, revealRound:G.round+1 });
   } else {
-    text = `策反失利：暗樁接觸失敗，擲骰結果：${rolls.join('、')}（未能擲出 5 或 6），所幸並未打草驚蛇。`;
+    text = `策反失利：暗樁接觸失敗，玉骰擲出【${anim.rolls.join('、')}】（未能擲出 5 或 6），所幸並未打草驚蛇。`;
   }
 
   G.lastActionResultText = text;
   G.turnStep = 'actionResult';
+  G.persuadeAnim = null;
   syncGameState();
   render();
 }
