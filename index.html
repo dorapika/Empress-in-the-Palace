@@ -476,6 +476,8 @@ function wsStartGame() {
     showPalaceModal('人數不足', '<p class="muted">至少需 2 位好友進入房間並選角後方可開局！</p>');
     return;
   }
+  const me = members.find(m => m.userId === wsUserId);
+  if (me) wsMyCharId = me.charId;
   const configs = members.map(m => ({
     charId: m.charId,
     isAi: false
@@ -892,12 +894,13 @@ function renderPlayerTurn(){
   const p = currentPlayer();
   const c = charOf(p.charId);
 
-  if(GAME_MODE === 'ws_party' && wsMyCharId && p.charId !== wsMyCharId){
+  // 一人一機模式下，若非自己回合且非「景仁宮滴血大審與裁決」，則顯示候駕防窺畫面
+  if(GAME_MODE === 'ws_party' && wsMyCharId && p.charId !== wsMyCharId && G.turnStep !== 'dixieAnim' && G.turnStep !== 'dixieResult'){
     renderWsWaitingTurn(p);
     return;
   }
 
-  if(p.isAi && G.turnStep !== 'dixieAnim' && G.turnStep !== 'actionResult'){
+  if(p.isAi && G.turnStep !== 'dixieAnim' && G.turnStep !== 'dixieResult' && G.turnStep !== 'actionResult'){
     renderAiThinkingTurn(p);
     return;
   }
@@ -1020,6 +1023,8 @@ function renderPlayerTurn(){
     body = renderPoisonAnimView(p);
   } else if(G.turnStep==='dixieAnim'){
     body = renderDixieAnimView(p);
+  } else if(G.turnStep==='dixieResult'){
+    body = renderDixieResultView(p);
   } else if(G.turnStep==='actionResult'){
     body = `
       <div class="drama-quote">${G.lastActionResultText}</div>
@@ -1445,6 +1450,7 @@ function useTianxianMeijiu(){
   }
   G.pregAnimResult = result;
   G.pregAnimTarget = p.idx;
+  G.pregnancyGateTarget = p.idx;
   G.pregAnimMode = 'sitong';
   G.phase = 'pregnancyGate';
   G.pregnancyGateRevealed = true;
@@ -2280,6 +2286,7 @@ function resolveSitong(){
   addLog(`${charOf(p.charId).name}於夜色闌珊之際掩上宮門，悄然執行了一項秘密行動……`, { secret:true, revealRound:G.round+1 });
   G.pregAnimResult = result;
   G.pregAnimTarget = p.idx;
+  G.pregnancyGateTarget = p.idx;
   G.pregAnimMode = 'sitong';
   G.phase = 'pregnancyGate';
   G.pregnancyGateRevealed = true;
@@ -2330,6 +2337,13 @@ function resolveDixie(){
     tSum
   };
   G.turnStep = 'dixieAnim';
+
+  if(G.players.every(pl => pl.isAi)){
+    finishDixieAnim();
+    endDixieTurn();
+    return;
+  }
+
   syncGameState();
   render();
 }
@@ -2341,6 +2355,10 @@ function renderDixieAnimView(p){
   const tChar = charOf(target.charId);
   const isHuanghouAccuser = (p.charId === 'huanghou');
   const isSettled = (anim.stage === 'settled' || anim.stage === 'result');
+
+  const isMeAccuser = (p.charId === wsMyCharId);
+  const isHost = (wsRoomData && wsRoomData.hostId === wsUserId);
+  const canAdvanceDixie = (GAME_MODE !== 'ws_party') || isMeAccuser || p.isAi || isHost;
 
   let html = `
     <div style="background:#fffcf2; border:1px solid var(--gold); padding:12px 14px; border-radius:3px; margin-bottom:12px;">
@@ -2416,7 +2434,13 @@ function renderDixieAnimView(p){
           </div>
         `)}
         <div class="row" style="justify-content:center; margin-top:12px;">
-          <button class="gold" onclick="finishDixieAnim()"><i class="fa-solid fa-check"></i> 領旨聽判 · 宣示大審結果</button>
+          ${canAdvanceDixie ? `
+            <button class="gold" onclick="finishDixieAnim()"><i class="fa-solid fa-check"></i> 領旨聽判 · 宣示大審結果</button>
+          ` : `
+            <div class="muted" style="align-self:center;">
+              <i class="fa-solid fa-hourglass-half fa-spin"></i> 大審點數已出，靜候主審宣旨定讞……
+            </div>
+          `}
         </div>
       </div>
     ` : `
@@ -2460,6 +2484,7 @@ function runDixieDuelAnimation(){
 
 function finishDixieAnim(){
   const anim = G.dixieAnim;
+  if(!anim) return;
   const p = currentPlayer();
   const target = G.players[anim.targetIdx];
   const pChar = charOf(p.charId);
@@ -2510,15 +2535,64 @@ function finishDixieAnim(){
 
   addLog(resultText, { type:'drama' });
   G.lastActionResultText = resultText;
-  G.turnStep = 'actionResult';
+  G.turnStep = 'dixieResult';
   G.dixieAnim = null;
 
-  syncGameState();
-  if(!p.alive){
-    endPlayerTurn();
-  } else {
+  // 判斷是否因大審處死而直接決出唯一存活勝者
+  const alivePlayers = G.players.filter(pl => pl.alive);
+  if(alivePlayers.length === 1 && G.players.length > 1){
+    G.winner = alivePlayers[0];
+    G.phase = 'gameOver';
+    syncGameState();
     render();
+    return;
   }
+
+  syncGameState();
+  render();
+}
+
+function renderDixieResultView(p){
+  const isMeCurrent = (p.charId === wsMyCharId);
+  const isHost = (wsRoomData && wsRoomData.hostId === wsUserId);
+  const canAdvance = (GAME_MODE !== 'ws_party') || isMeCurrent || !p.alive || isHost;
+
+  return `
+    <div style="text-align:center; padding:12px 6px;">
+      <div style="color:var(--crimson); font-size:2.4rem; margin-bottom:8px;">
+        <i class="fa-solid fa-scale-balanced"></i>
+      </div>
+      <h2 style="justify-content:center; color:var(--crimson-dark); margin:0 0 10px;">
+        景仁宮大審 · 皇室血脈裁決
+      </h2>
+      <div class="drama-quote" style="font-size:1rem; line-height:1.7; background:#fff2f4; border-color:var(--crimson); color:#7d1b28; margin:14px 0; text-align:left; padding:12px 16px;">
+        <span>${G.lastActionResultText}</span>
+      </div>
+
+      <div style="background:#fcf8f0; border:1px dashed var(--gold); border-radius:4px; padding:10px; margin:14px 0; font-size:.84rem; color:#6b5d4b;">
+        <i class="fa-solid fa-scroll"></i> 景陽鐘鳴，起居注已將此次景仁宮審判結果昭告天下六宮！
+      </div>
+
+      <div class="row" style="justify-content:center; margin-top:16px;">
+        ${canAdvance ? `
+          <button class="gold" onclick="endDixieTurn()"><i class="fa-solid fa-check"></i> 領旨遵從 · 繼續下一宮室起居</button>
+        ` : `
+          <div class="muted" style="align-self:center;">
+            <i class="fa-solid fa-hourglass-half fa-spin"></i> 審判結果已昭告六宮，靜候主位領旨退殿……
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function endDixieTurn(){
+  G.turnStep = 'gate';
+  G.pendingAction = null;
+  G.dixieAnim = null;
+  G.orderPos++;
+  syncGameState();
+  render();
 }
 
 function resolveBaping(){
@@ -3000,7 +3074,9 @@ function proceedPregnancyQueue(){
 }
 
 function renderPregnancyGate(){
-  const targetIdx = G.pregnancyGateTarget !== undefined ? G.pregnancyGateTarget : G.pregAnimTarget;
+  const targetIdx = (G.pregAnimMode === 'sitong')
+    ? (G.pregnancyGateTarget !== undefined ? G.pregnancyGateTarget : G.pregAnimTarget)
+    : (G.pregnancyGateTarget !== undefined ? G.pregnancyGateTarget : G.pregAnimTarget);
   const target = G.players[targetIdx];
   if(!target || !target.alive){
     advancePregnancyQueue();
@@ -3009,10 +3085,16 @@ function renderPregnancyGate(){
   const c = charOf(target.charId);
   const isSitong = (G.pregAnimMode === 'sitong');
 
+  // 一人一機模式下，若非受測小主本人，完全不可見、不可操作，維持顯示商討宮務候駕畫面
+  if (GAME_MODE === 'ws_party' && wsMyCharId && target.charId !== wsMyCharId) {
+    renderWsWaitingTurn(target);
+    return;
+  }
+
   if(!G.pregnancyGateRevealed){
     app.innerHTML = `
       <div class="card gate">
-        <p class="muted">侍寢結果為私人訊息，請將裝置交給：</p>
+        <p class="muted">${GAME_MODE==='ws_party' ? '<i class="fa-solid fa-lock"></i> 喜脈探查為最高機密，僅您本手機可見：' : '侍寢結果為私人訊息，請將裝置交給：'}</p>
         <div style="display:flex; justify-content:center; margin:10px 0;">
           <img src="${c.avatar}" class="char-avatar lg" onerror="this.src='https://placehold.co/110x110/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
         </div>
@@ -3037,7 +3119,7 @@ function renderPregnancyGate(){
             <b style="color:var(--jade);">【防窺保密生效】外人僅知小主侍寢，無從窺探您今夜是否處於排卵期！</b>
           </p>
           <div class="row" style="justify-content:center; margin-top:16px;">
-            <button class="gold" onclick="advancePregnancyQueue()"><i class="fa-solid fa-check"></i> 領旨知悉 · 退出寢殿</button>
+            <button class="gold" onclick="finishPregnancyGate()"><i class="fa-solid fa-check"></i> 領旨知悉 · 退出寢殿</button>
           </div>
         </div>
       </div>
@@ -3088,7 +3170,7 @@ function renderPregnancyGate(){
             </div>
           `}
           <div class="row" style="justify-content:center; margin-top:14px;">
-            <button class="gold" onclick="finishPregnancyGate()"><i class="fa-solid fa-arrow-right"></i> ${isSitong ? '妥帖收卷 · 結束本宮回合並移交裝置' : '謹遵天命 · 妥帖收卷'}</button>
+            <button class="gold" onclick="finishPregnancyGate()"><i class="fa-solid fa-arrow-right"></i> ${isSitong ? '妥帖收卷 · 結束本宮回合' : '謹遵天命 · 妥帖收卷'}</button>
           </div>
         </div>
       ` : ''}
@@ -3147,7 +3229,15 @@ function startCardFlips(){
 }
 
 function finishPregnancyGate(){
-  if(G.pregAnimMode === 'sitong'){
+  G.pregnancyGateRevealed = false;
+  G.pregAnim = null;
+  G.pregAnimResult = null;
+  G.pregnancyGateTarget = undefined;
+  G.pregAnimTarget = undefined;
+  const isSitong = (G.pregAnimMode === 'sitong');
+  G.pregAnimMode = null;
+
+  if(isSitong){
     G.phase = 'playerTurn';
     endPlayerTurn();
   } else {
