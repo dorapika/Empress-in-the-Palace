@@ -271,7 +271,7 @@
 /* ============================= 全域資料庫 ============================= */
 const CHARACTERS = [
   { id:'huanghou', name:'皇后', title:'烏拉那拉宜修', element:'土', 
-    avatar:'images/characters/char1.jpg', languidAvatar:'images/characters/languid/char1.png', mensesImg:'images/menses/char1.png',
+    avatar:'images/characters/char1.jpg', languidAvatar:'images/characters/languid/char1.png', punishedAvatar:'images/characters/punished/char1.png', mensesImg:'images/menses/char1.png',
     resource:14, beauty:3, intel:8, talent:3, cycle:{m:2,f:3,o:1},
     quote:'「皇上！臣妾做不到……臣妾真的做不到啊！」',
     skills:[
@@ -279,7 +279,7 @@ const CHARACTERS = [
       { key:'chunyuan', name:'純元護體', desc:'哭訴純元故情引皇上百感交集，各項能力 +5（每 3 回合限用 1 次）', type:'active-allstats', amount:5, cooldown:3 }
     ]},
   { id:'huafei', name:'華妃', title:'年世蘭', element:'火', 
-    avatar:'images/characters/char2.jpg', languidAvatar:'images/characters/languid/char2.png', mensesImg:'images/menses/char2.png',
+    avatar:'images/characters/char2.jpg', languidAvatar:'images/characters/languid/char2.png', punishedAvatar:'images/characters/punished/char2.png', mensesImg:'images/menses/char2.png',
     resource:8, beauty:8, intel:6, talent:4, cycle:{m:3,f:1,o:2},
     quote:'「賤人就是矯情！不痛痛快快吐了真話，本宮便賞她一丈紅！」',
     skills:[
@@ -287,7 +287,7 @@ const CHARACTERS = [
       { key:'zhangshi', name:'仗勢欺人', desc:'仗著年氏威名下毒威逼，投毒檢定額外多擲 1 顆骰子（每 2 回合限用 1 次）', type:'active-poisondie', amount:1, cooldown:2 }
     ]},
   { id:'wanpin', name:'莞嬪', title:'甄嬛', element:'木', 
-    avatar:'images/characters/char3.jpg', languidAvatar:'images/characters/languid/char3.png', mensesImg:'images/menses/char3.png',
+    avatar:'images/characters/char3.jpg', languidAvatar:'images/characters/languid/char3.png', punishedAvatar:'images/characters/punished/char3.png', mensesImg:'images/menses/char3.png',
     resource:6, beauty:8, intel:8, talent:7, cycle:{m:2,f:2,o:3},
     quote:'「這幾年的情愛與時光，終究是錯付了……」',
     skills:[
@@ -295,7 +295,7 @@ const CHARACTERS = [
       { key:'xiangshui', name:'香水百合', desc:'迷情香引百合，可逼迫身懷六甲之嬪妃強行侍寢誘發滑胎', type:'special-mixiang' }
     ]},
   { id:'huiguiren', name:'惠貴人', title:'沈眉莊', element:'金', 
-    avatar:'images/characters/char4.jpg', languidAvatar:'images/characters/languid/char4.png', mensesImg:'images/menses/char4.png',
+    avatar:'images/characters/char4.jpg', languidAvatar:'images/characters/languid/char4.png', punishedAvatar:'images/characters/punished/char4.png', mensesImg:'images/menses/char4.png',
     resource:6, beauty:7, intel:6, talent:5, cycle:{m:2,f:2,o:2},
     quote:'「寧可枝頭抱香死，何曾吹落北風中。」',
     skills:[
@@ -303,7 +303,7 @@ const CHARACTERS = [
       { key:'tianxian', name:'天仙媚酒', desc:'處於排卵期時，可藉御酒私通懷孕，脈象天衣無縫視為正統龍胎（全場限 1 次）', type:'special-sitong-once', usesLeft:1 }
     ]},
   { id:'anda_ying', name:'安答應', title:'安陵容', element:'水', 
-    avatar:'images/characters/char5.jpg', languidAvatar:'images/characters/languid/char5.png', mensesImg:'images/menses/char5.png',
+    avatar:'images/characters/char5.jpg', languidAvatar:'images/characters/languid/char5.png', punishedAvatar:'images/characters/punished/char5.png', mensesImg:'images/menses/char5.png',
     resource:6, beauty:5, intel:6, talent:9, cycle:{m:1,f:3,o:3},
     quote:'「原是我不配……吃苦杏仁，竟是唯一由得了自己的事了。」',
     skills:[
@@ -549,6 +549,14 @@ function actionOf(id){ return ACTION_CARDS.find(a=>a.id===id); }
 function skillAvailable(p, key){ return G.round >= (p.skillCooldownUntil[key]||0); }
 function useSkillCooldown(p, key, cd){ p.skillCooldownUntil[key] = G.round + cd; }
 
+/* 判定小主是否處於無法行動（臥病/禁足/受罰）狀態 */
+function isPunishedState(p){
+  if(!p || !G) return false;
+  const player = (typeof p === 'object' && p.sickUntil !== undefined) ? p : G.players.find(x => x.charId === (p.charId || p));
+  if(!player) return false;
+  return G.round <= (player.sickUntil || 0);
+}
+
 /* 判定小主是否處於【私通幽會、侍寢承恩、臨盆分娩】之特定專屬事件畫面 */
 function isLanguidState(p, customContext = null){
   if(!p) return false;
@@ -562,6 +570,12 @@ function getPlayerAvatar(p, customContext = null){
   const charId = (typeof p === 'string') ? p : p.charId;
   const c = charOf(charId);
   if(!c) return '';
+
+  // 若該角色處於無法行動（臥病/禁足/受罰）回合，優先呈現受罰/抱恙姿態
+  if(isPunishedState(p) && c.punishedAvatar){
+    return c.punishedAvatar;
+  }
+
   const isLanguid = isLanguidState(p, customContext);
   return (isLanguid && c.languidAvatar) ? c.languidAvatar : c.avatar;
 }
@@ -1880,10 +1894,23 @@ function renderActionForm(p){
   }
 
   if(a.id === 'dixie'){
+    const birthEligible = o => (o.princes > 0 || o.princesses > 0);
+    const eligibleOthers = others.filter(birthEligible);
+    if(!eligibleOthers.length){
+      return `
+        <div class="drama-quote"><span>「六宮之中尚無嬪妃誕下皇嗣，無從指控血脈不正……」</span></div>
+        <p class="muted">目前後宮尚無任何小主誕下子嗣（阿哥或公主），無法發動滴血認親大審。</p>
+        <div class="row"><button class="secondary" onclick="cancelAction()"><i class="fa-solid fa-arrow-left"></i> 罷了，按捺時機退下</button></div>
+      `;
+    }
+    if(!eligibleOthers.some(o => o.idx === G.pendingAction.targetIdx)){
+      G.pendingAction.targetIdx = eligibleOthers[0].idx;
+    }
+    const currentDixieTargetIdx = G.pendingAction.targetIdx;
     return `
       <div class="fieldset">
         <label><i class="fa-solid fa-crosshairs"></i> 於景仁宮指控誰的皇嗣血脈不正（僅限已誕育子嗣者，點選頭像）：</label>
-        ${renderVisualTargetSelector(targetIdx, o => (o.princes > 0 || o.princesses > 0))}
+        ${renderVisualTargetSelector(currentDixieTargetIdx, birthEligible)}
       </div>
       <div class="drama-quote"><span>「若這碗水裡有白礬，無論是誰的血融在一起，都是天理不容的冤枉！」</span></div>
       <p class="muted" style="color:var(--crimson);">
@@ -2467,8 +2494,17 @@ function resolveSitong(){
 
 function resolveDixie(){
   const p = currentPlayer();
-  const targetIdx = G.pendingAction.targetIdx;
+  const targetIdx = G.pendingAction ? G.pendingAction.targetIdx : null;
+  if(targetIdx === null || !G.players[targetIdx] || !G.players[targetIdx].alive) return;
   const target = G.players[targetIdx];
+
+  if(target.princes <= 0 && target.princesses <= 0){
+    G.lastActionResultText = '指控無效：該小主尚未誕育任何皇嗣，無從滴血認親！';
+    G.turnStep = 'actionResult';
+    syncGameState();
+    render();
+    return;
+  }
 
   const pIntel = effectiveStat(p, 'intel');
   const tIntel = effectiveStat(target, 'intel');
@@ -2587,6 +2623,11 @@ function renderDixieAnimView(p){
           <div class="drama-quote" style="background:#fdf2f4; border-color:var(--crimson); font-size:.92rem;">
             <span>${anim.isTrulySitong ? `【鐵證如山 · 私通定讞】雙血不融，真相大白！${pChar.name}（${anim.pSum}點）勝過${tChar.name}（${anim.tSum}點）！${tChar.name}私通事發，打入冷宮賜自盡淘汰！` : `【屈打成招 · 冤屈難雪】${pChar.name}以勢壓人（${anim.pSum}點 vs ${anim.tSum}點），${tChar.name}屈打成招，美貌重挫 5 點（若又有身孕則受驚滑胎）！`}</span>
           </div>
+          ${anim.isTrulySitong ? `
+            <div style="text-align:center; margin:10px 0;">
+              <img src="${tChar.punishedAvatar || tChar.avatar}" alt="${tChar.name}賜自盡" style="width:140px; height:140px; border-radius:50%; border:3px solid var(--crimson); box-shadow:0 4px 14px rgba(122,31,43,0.45); object-fit:cover; object-position:center 15%; background:#dfd2b5; display:inline-block;" ${getAvatarFallbackAttrs(tChar)}>
+            </div>
+          ` : ''}
         ` : (anim.pSum < anim.tSum ? `
           <div class="drama-quote" style="background:#fef5f5; border-color:var(--crimson); font-size:.92rem;">
             <span>${anim.isTrulySitong 
@@ -2597,6 +2638,11 @@ function renderDixieAnimView(p){
                   ? `【水清如鏡 · 誣陷龍裔】水清如鏡！${tChar.name}獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）洗刷冤屈！皇后誣告天子龍脈本犯大不敬死罪，即將聽候發落……`
                   : `【誣陷龍裔 · 當場杖斃】水清如鏡！${pChar.name}誣陷天子龍胎（${anim.pSum}點 vs ${anim.tSum}點），皇上龍顏震怒，${pChar.name}當場杖斃淘汰！`)}</span>
           </div>
+          ${(!anim.isTrulySitong && anim.pSum < anim.tSum && !isHuanghouAccuser) ? `
+            <div style="text-align:center; margin:10px 0;">
+              <img src="${pChar.punishedAvatar || pChar.avatar}" alt="${pChar.name}受杖斃" style="width:140px; height:140px; border-radius:50%; border:3px solid var(--crimson); box-shadow:0 4px 14px rgba(122,31,43,0.45); object-fit:cover; object-position:center 15%; background:#dfd2b5; display:inline-block;" ${getAvatarFallbackAttrs(pChar)}>
+            </div>
+          ` : ''}
         ` : `
           <div class="drama-quote" style="font-size:.92rem;">
             <span>【水波微瀾 · 平手收場】雙方點數皆為 ${anim.pSum} 點，水無異狀，各執一詞，皇上拂袖離去，相安無事！</span>
@@ -2665,6 +2711,8 @@ function finishDixieAnim(){
   if(anim.isTrulySitong){
     if(anim.pSum > anim.tSum){
       target.alive = false;
+      G.dixiePunishedChar = tChar;
+      G.dixiePunishedReason = '私通事發血脈不正 · 打入冷宮賜自盡淘汰';
       resultText = `【景仁宮風雲·鐵證如山】${pChar.name}（${anim.pSum}點）大勝${tChar.name}（${anim.tSum}點）！私通血脈確鑿，${tChar.name}被打入冷宮賜自盡，淘汰出局！`;
     } else if(anim.pSum < anim.tSum){
       if(isHuanghouAccuser){
@@ -2689,6 +2737,8 @@ function finishDixieAnim(){
         resultText = `【太后遺詔 · 景仁宮定讞】竹息姑姑宣讀太后遺詔：「哀家身後，皇后若有大不敬之罪，皇帝須謹記，烏拉那拉氏不可廢后！」皇上特念舊恩，烏拉那拉氏安置於景仁宮。沒收手牌並禁足 2 回合。`;
       } else {
         p.alive = false;
+        G.dixiePunishedChar = pChar;
+        G.dixiePunishedReason = '妄議皇家龍嗣大逆不道 · 當場杖斃淘汰';
         resultText = `【誣陷天子龍胎·當場杖斃】${tChar.name}身正獲皇權庇佑（${anim.tSum}點 vs ${anim.pSum}點）！${pChar.name}妄議皇家龍嗣大逆不道，當場被杖斃淘汰！`;
       }
     } else if(anim.pSum > anim.tSum){
@@ -2736,6 +2786,14 @@ function renderDixieResultView(p){
       <h2 style="justify-content:center; color:var(--crimson-dark); margin:0 0 10px;">
         景仁宮大審 · 皇室血脈裁決
       </h2>
+      ${G.dixiePunishedChar ? `
+        <div style="text-align:center; margin:14px 0;">
+          <img src="${G.dixiePunishedChar.punishedAvatar || G.dixiePunishedChar.avatar}" alt="${G.dixiePunishedChar.name}受罰" style="width:150px; height:150px; border-radius:50%; border:3px solid var(--crimson); box-shadow:0 4px 18px rgba(122,31,43,0.45); object-fit:cover; object-position:center 15%; background:#dfd2b5; display:inline-block;" ${getAvatarFallbackAttrs(G.dixiePunishedChar)}>
+          <div style="font-size:.9rem; color:var(--crimson); font-weight:bold; margin-top:8px;">
+            <i class="fa-solid fa-skull"></i> ${G.dixiePunishedReason}
+          </div>
+        </div>
+      ` : ''}
       ${G.dixiePlotEdict ? `
         <div style="text-align:center; margin:12px 0;">
           <img src="images/plot/Empress-Dowager's-Imperial-Edict.png" alt="太后遺詔" style="max-width:100%; max-height:260px; border-radius:4px; border:2px solid var(--gold); box-shadow:0 4px 16px rgba(0,0,0,0.35);" onerror="this.style.display='none'">
@@ -2779,6 +2837,8 @@ function endDixieTurn(){
   G.pendingAction = null;
   G.dixieAnim = null;
   G.dixiePlotEdict = null;
+  G.dixiePunishedChar = null;
+  G.dixiePunishedReason = null;
   G.orderPos++;
   syncGameState();
   render();
@@ -3169,7 +3229,7 @@ function renderFenghuoPrompt(){
     <div class="card">
       <h2>翊坤宮霸道截車 · 烽火連天 <span class="tag">SPECIAL</span></h2>
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-        <img src="${c.avatar}" class="char-avatar lg" onerror="this.src='https://placehold.co/100x100/7a1f2b/f4e5bf?text=${encodeURIComponent(c.name)}'">
+        <img src="${getPlayerAvatar(p)}" class="char-avatar lg" ${getAvatarFallbackAttrs(c)}>
         <div>
           <div class="drama-quote" style="margin:0 0 6px;"><span>${c.quote}</span></div>
           <div class="muted">華妃娘娘爭寵綜合點數位居第二！是否依仗年將軍赫赫威名，發動專屬特技【${skill.name}】？</div>
@@ -3736,7 +3796,7 @@ function closePalaceModal(){
 function openAssetManagerModal(){
   const html = `
     <div class="muted" style="margin-bottom:12px;">
-      在此可點選小主，自訂或上傳常規立繪與慵懶態（私通/侍寢/身懷六甲/臨盆）之立繪圖檔（圖片暫存於本地瀏覽器記憶體中）：
+      在此可點選小主，自訂或上傳常規立繪、慵懶態（私通/侍寢/臨盆）與無法行動態（臥病/禁足/受罰）之立繪圖檔（圖片暫存於本地瀏覽器記憶體中）：
     </div>
     <div class="itemlist">
       ${CHARACTERS.map(c => `
@@ -3744,7 +3804,7 @@ function openAssetManagerModal(){
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <b style="color:var(--crimson-dark); font-size:.95rem;">${c.name} · ${c.title}</b>
           </div>
-          <div style="display:flex; justify-content:space-around; align-items:center; gap:8px;">
+          <div style="display:flex; justify-content:space-around; align-items:center; gap:8px; flex-wrap:wrap;">
             <div style="text-align:center;">
               <img src="${c.avatar}" id="preview_${c.id}" class="char-avatar" ${getAvatarFallbackAttrs(c)}>
               <div style="font-size:.72rem; color:#666; margin:3px 0;">常規姿態</div>
@@ -3755,10 +3815,18 @@ function openAssetManagerModal(){
             </div>
             <div style="text-align:center;">
               <img src="${c.languidAvatar || c.avatar}" id="preview_languid_${c.id}" class="char-avatar" ${getAvatarFallbackAttrs(c)}>
-              <div style="font-size:.72rem; color:var(--crimson); margin:3px 0; font-weight:bold;">慵懶態 (孕/侍/通/盆)</div>
+              <div style="font-size:.72rem; color:var(--crimson); margin:3px 0; font-weight:bold;">慵懶態 (侍/通/盆)</div>
               <label class="top-btn" style="cursor:pointer; margin:0; padding:2px 8px; font-size:.7rem;">
                 <i class="fa-solid fa-upload"></i> 更換
                 <input type="file" accept="image/*" style="display:none;" onchange="handleAssetUpload('${c.id}', this, 'languid')">
+              </label>
+            </div>
+            <div style="text-align:center;">
+              <img src="${c.punishedAvatar || c.avatar}" id="preview_punished_${c.id}" class="char-avatar" ${getAvatarFallbackAttrs(c)}>
+              <div style="font-size:.72rem; color:#6b6355; margin:3px 0; font-weight:bold;">無法行動態 (罰/病)</div>
+              <label class="top-btn" style="cursor:pointer; margin:0; padding:2px 8px; font-size:.7rem;">
+                <i class="fa-solid fa-upload"></i> 更換
+                <input type="file" accept="image/*" style="display:none;" onchange="handleAssetUpload('${c.id}', this, 'punished')">
               </label>
             </div>
           </div>
@@ -3769,7 +3837,7 @@ function openAssetManagerModal(){
       <button class="gold" onclick="closePalaceModal()">完成並返回宮中</button>
     </div>
   `;
-  showPalaceModal('內務府造辦處 · 原版與慵懶態圖檔管理器', html);
+  showPalaceModal('內務府造辦處 · 原版、慵懶態與無法行動立繪管理器', html);
 }
 
 function handleAssetUpload(charId, input, type = 'normal'){
@@ -3782,6 +3850,10 @@ function handleAssetUpload(charId, input, type = 'normal'){
           c.languidAvatar = e.target.result;
           const prev = document.getElementById('preview_languid_' + charId);
           if(prev) prev.src = c.languidAvatar;
+        } else if(type === 'punished'){
+          c.punishedAvatar = e.target.result;
+          const prev = document.getElementById('preview_punished_' + charId);
+          if(prev) prev.src = c.punishedAvatar;
         } else {
           c.avatar = e.target.result;
           const prev = document.getElementById('preview_' + charId);
